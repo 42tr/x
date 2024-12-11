@@ -1,0 +1,62 @@
+name: Rust CI and Deploy
+
+on:
+  push:
+    branches:
+      - main  # 监听 main 分支的推送
+
+jobs:
+  build-and-deploy:
+    environment: 
+      name: 42tr
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Build project
+      run: cargo build --release
+    
+    - name: copy file via ssh password
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{secrets.SERVER_HOST}}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: 22
+        source: "target/release/x"
+        target: "/home/x/"
+      
+    - name: copy file via ssh password
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{secrets.SERVER_HOST}}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: 22
+        source: "Dockerfile"
+        target: "/home/x/"
+
+    - name: Deploy to CentOS server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: 22
+        script: |
+          cd /home/x/
+          mv target/release/x ./
+          rm -rf target
+          docker stop kex >> /dev/null 2>&1
+          docker rm kex >> /dev/null 2>&1
+          docker rmi x >> /dev/null 2>&1
+          docker build -t x .
+          docker run -d --restart unless-stopped -p 8080:8080 -e EMAIL_AUTHORIZE_CODE=${{ secrets.EMAIL_AUTHORIZE_CODE }} --name=kex x ./x

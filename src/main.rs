@@ -10,12 +10,17 @@ async fn main() -> anyhow::Result<()> {
     sched.add(
         Job::new_async("0 0 4 * * *", |_uuid, mut _l| {
             Box::pin(async move {
+                println!("Start schedule !!!");
                 send_email();
             })
         })?
     ).await?;
     sched.start().await?;
-
+    
+    println!("Main thread start !!!");
+    let authorize_code =
+        std::env::var("EMAIL_AUTHORIZE_CODE").expect("Cannot get env EMAIL_AUTHORIZE_CODE");
+    println!("Authorize code: {}", authorize_code);
     // 使主线程保持阻塞直到用户手动终止（例如按 Ctrl+C）
     tokio::signal::ctrl_c().await?;
     Ok(())

@@ -59,5 +59,4 @@ jobs:
           chmod 777 x
           rm -rf target
           export EMAIL_AUTHORIZE_CODE=${{ secrets.EMAIL_AUTHORIZE_CODE }}
-          nohup ./x &
-          exit 0
+          nohup ./x & disown

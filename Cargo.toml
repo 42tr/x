@@ -19,3 +19,6 @@ charts-rs = { version = "0.3.19", features = ["image-encoder"] }
 
 tokio = { version = "1", features = ["full"] }
 tokio-cron-scheduler = "0.13.0"
+
+[dev-dependencies]
+tokio-test = "*"

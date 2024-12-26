@@ -3,8 +3,8 @@ use charts_rs::{ BarChart, Box, SeriesCategory, THEME_ANT, svg_to_png };
 
 /// 生成折线图
 /// 返回折线图的名称
-pub fn create_line() -> anyhow::Result<String> {
-    let (dates, prices) = get_info()?;
+pub async fn create_line() -> anyhow::Result<String> {
+    let (dates, prices) = get_info().await?;
 
     let mut axis_min = 10000.0;
     prices.clone().into_iter().for_each(|price| {
@@ -36,8 +36,8 @@ pub fn create_line() -> anyhow::Result<String> {
 }
 
 /// 获取黄金价格
-fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
-    let cli = reqwest::blocking::Client::new();
+async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
+    let cli = reqwest::Client::new();
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
         "User-Agent",
@@ -48,7 +48,7 @@ fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
         reqwest::header::HeaderValue::from_str("https://quote.cngold.org/gjs/swhj_zghj.html").unwrap(),
     );
     let url = "https://api.jijinhao.com/quoteCenter/historys.htm?codes=JO_52683&style=3&pageSize=180";
-    let resp = cli.get(url).headers(headers).send().unwrap().text().unwrap();
+    let resp = cli.get(url).headers(headers).send().await?.text().await?;
     let resp = resp.replace("var quote_json = ", "");
     let rsp: Rsp = serde_json::from_str(&resp).unwrap();
     let data = rsp.data.prices;

@@ -2,16 +2,19 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod email;
 mod gold;
+mod leetcode;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    send_email().await.unwrap();
     let sched = JobScheduler::new().await?;
 
     sched.add(
-        Job::new_async("0 0 4 * * *", |_uuid, mut _l| {
+        Job::new_async("0 0 1 * * *", |_uuid, mut _l| {
             Box::pin(async move {
-                println!("Start schedule !!!");
-                send_email();
+                // 打印当前时间
+                println!("Start schedule !!! Current time: {:?}", std::time::SystemTime::now());
+                send_email().await.unwrap();
             })
         })?
     ).await?;
@@ -27,21 +30,29 @@ async fn main() -> anyhow::Result<()> {
 
 }
 
-fn send_email() {
-    let content = r#"
+async fn send_email() -> anyhow::Result<()> {
+    let (lc_name, lc_href) = leetcode::daily_question().await?;
+    let content = format!(r#"
         <html>
             <body>
+                <h2>LeetCode</h2>
+                <ul>
+                    <li>
+                        <a href="{lc_href}">{lc_name}</a>
+                    </li>
+                </ul>
                 <h2>黄金价格</h2>
                 <img src="cid:gold_line.png" />
             </body>
         </html>
-    "#;
+    "#);
 
-    gold::create_line().unwrap();
+    gold::create_line().await?;
     email::send_with_file(
         "1055894396@qq.com".to_string(),
-        "新闻速递".to_string(),
+        "每日速递".to_string(),
         content.to_string(),
         vec!["gold_line.png".to_string()]).unwrap();
     std::fs::remove_file("gold_line.png").unwrap();
+    Ok(())
 }

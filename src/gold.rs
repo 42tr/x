@@ -62,18 +62,18 @@ async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
 }
 
 #[derive(Debug, serde::Deserialize)]
-pub struct Price {
+struct Price {
     q1: f32,
     time: i64,
 }
 
 #[derive(Debug, serde::Deserialize)]
-pub struct Data {
+struct Data {
     #[serde(rename = "JO_52683")]
     prices: Vec<Price>,
 }
 
 #[derive(Debug, serde::Deserialize)]
-pub struct Rsp {
+struct Rsp {
     data: Data,
 }

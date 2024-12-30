@@ -2,6 +2,7 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod email;
 mod gold;
+mod stock;
 mod leetcode;
 
 #[tokio::main]
@@ -10,7 +11,7 @@ async fn main() -> anyhow::Result<()> {
     let sched = JobScheduler::new().await?;
 
     sched.add(
-        Job::new_async("0 0 1 * * *", |_uuid, mut _l| {
+        Job::new_async("0 0 0 * * *", |_uuid, mut _l| {
             Box::pin(async move {
                 // 打印当前时间
                 println!("Start schedule !!! Current time: {:?}", std::time::SystemTime::now());
@@ -43,16 +44,20 @@ async fn send_email() -> anyhow::Result<()> {
                 </ul>
                 <h2>黄金价格</h2>
                 <img src="cid:gold_line.png" />
+                <h2>上证指数</h2>
+                <img src="cid:sse_line.png" />
             </body>
         </html>
     "#);
 
     gold::create_line().await?;
+    stock::create_line().await?;
     email::send_with_file(
         "1055894396@qq.com".to_string(),
         "每日速递".to_string(),
         content.to_string(),
-        vec!["gold_line.png".to_string()]).unwrap();
+        vec!["gold_line.png".to_string(), "sse_line.png".to_string()]).unwrap();
     std::fs::remove_file("gold_line.png").unwrap();
+    std::fs::remove_file("sse_line.png").unwrap();
     Ok(())
 }

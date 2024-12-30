@@ -5,19 +5,13 @@ use charts_rs::{ BarChart, Box, SeriesCategory, THEME_ANT, svg_to_png };
 pub async fn create_line() -> anyhow::Result<String> {
     let (dates, prices) = get_info().await?;
 
-    let mut axis_min = 10000.0;
-    prices.clone().into_iter().for_each(|price| {
-        if price < axis_min {
-            axis_min = price;
-        }
-    });
-    axis_min = ((axis_min as i32 / 100) * 100) as f32;
+    let axis_min = prices.clone().into_iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap_or(0.0) as i32 / 100 * 100;
     let mut bar_chart = BarChart::new_with_theme(
         vec![("Point", prices).into(),],
         dates,
         THEME_ANT,
     );
-    bar_chart.y_axis_configs[0].axis_min = Some(axis_min);
+    bar_chart.y_axis_configs[0].axis_min = Some(axis_min as f32);
 
     bar_chart.width = 1200.0;
     bar_chart.title_text = "SSE Index".to_string();

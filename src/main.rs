@@ -3,6 +3,7 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 mod email;
 mod gold;
 mod stock;
+mod news;
 mod leetcode;
 
 #[tokio::main]
@@ -33,6 +34,10 @@ async fn main() -> anyhow::Result<()> {
 
 async fn send_email() -> anyhow::Result<()> {
     let (lc_name, lc_href) = leetcode::daily_question().await?;
+    let (news_times, news_links, news_titles) = news::get().await?;
+    let gold_line_png = gold::create_line().await?;
+    let stock_line_png = stock::create_line().await?;
+
     let content = format!(r#"
         <html>
             <body>
@@ -43,21 +48,34 @@ async fn send_email() -> anyhow::Result<()> {
                     </li>
                 </ul>
                 <h2>黄金价格</h2>
-                <img src="cid:gold_line.png" />
+                <img src="cid:{gold_line_png}" />
                 <h2>上证指数</h2>
-                <img src="cid:sse_line.png" />
+                <img src="cid:{stock_line_png}" />
+                <h2>新闻</h2>
+                {}
             </body>
         </html>
-    "#);
-
-    gold::create_line().await?;
-    stock::create_line().await?;
+    "#, concat_news(news_times, news_links, news_titles));
+    
     email::send_with_file(
         "1055894396@qq.com".to_string(),
         "每日速递".to_string(),
         content.to_string(),
-        vec!["gold_line.png".to_string(), "sse_line.png".to_string()]).unwrap();
-    std::fs::remove_file("gold_line.png").unwrap();
-    std::fs::remove_file("sse_line.png").unwrap();
+        vec![gold_line_png.clone(), stock_line_png.clone()]).unwrap();
+    std::fs::remove_file(gold_line_png).unwrap();
+    std::fs::remove_file(stock_line_png).unwrap();
     Ok(())
+}
+
+fn concat_news(news_times: Vec<String>, news_links: Vec<String>, news_titles: Vec<String>) -> String {
+    let mut news_content = String::new();
+    news_content += "<ul>";
+    for (i, news_time) in news_times.iter().enumerate() {
+        news_content += &format!(r#"
+            <li>
+                {} <a href="{}">{}</a>
+            </li>
+        "#, news_time, news_links[i], news_titles[i]);
+    }
+    news_content + "</ul>"
 }

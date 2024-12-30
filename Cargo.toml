@@ -15,6 +15,7 @@ anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = "0.4"
+chrono-tz = "0.10.0"
 charts-rs = { version = "0.3.19", features = ["image-encoder"] }
 
 tokio = { version = "1", features = ["full"] }

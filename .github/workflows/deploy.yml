@@ -22,7 +22,7 @@ jobs:
         override: true
 
     - name: Build project
-      run: rustup target add x86_64-unknown-linux-musl && cargo build --target x86_64-unknown-linux-musl --release
+      run: apt install musl-tools && rustup target add x86_64-unknown-linux-musl && cargo build --target x86_64-unknown-linux-musl --release
 
     - name: Create directory
       uses: appleboy/ssh-action@master

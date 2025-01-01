@@ -83,9 +83,9 @@ fn concat_news(news_times: Vec<String>, news_links: Vec<String>, news_titles: Ve
     news_content + "</ul>"
 }
 
-fn concat_comic(comics: Vec<(String, String, String)>) -> String {
+fn concat_comic(comics: Vec<(String, String)>) -> String {
     if comics.is_empty() {
         return "".to_owned();
     }
-    "<h2>漫画</h2><ul>".to_owned() + &comics.into_iter().map(|(name, chapter_name, link)| format!(r#"<li>{} <a href="{}">{}</a></li>"#, name, link, chapter_name)).collect::<Vec<_>>().join("") + "</ul>"
+    "<h2>漫画</h2><ul>".to_owned() + &comics.into_iter().map(|(name, chapter_name)| format!(r#"<li>{} {}</li>"#, name, chapter_name)).collect::<Vec<_>>().join("") + "</ul>"
 }

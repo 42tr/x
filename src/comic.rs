@@ -1,21 +1,20 @@
 use anyhow::Ok;
-use tokio::process::Command;
 use std::{collections::HashMap, io::Write};
 
 /// 获取最新章节
 /// 
 /// output:
-/// Vec<(String, String, String)>: 漫画名称、最新章节名称、最新章节链接
+/// Vec<(String, String)>: 漫画名称、最新章节名称
 /// 关注漫画 manga-pk25498 斗破苍穹、manga-fb45571 一人之下、manga-wq98740 妖神记、manga-pv587814 海贼王
-pub async fn get_latest_chapters() -> anyhow::Result<Vec<(String, String, String)>> {
+pub async fn get_latest_chapters() -> anyhow::Result<Vec<(String, String)>> {
     let comics = vec![
-        ("manga-pk25498", "斗破苍穹"),
-        ("manga-fb45571", "一人之下"),
-        ("manga-wq98740", "妖神记"),
-        ("manga-pv587814", "海贼王"),
+        ("531040", "斗破苍穹"),
+        ("531490", "一人之下"),
+        ("533395", "妖神记"),
+        ("505430", "航海王"),
     ];
 
-    let mut latest_chapter_list: Vec<(String, String, String)> = Vec::new();
+    let mut latest_chapter_list: Vec<(String, String)> = Vec::new();
 
     let latest_chapter_before = read_lastest_chapter()?;
     let mut latest_chapter_next: Vec<(String, String)> = vec![];
@@ -26,14 +25,14 @@ pub async fn get_latest_chapters() -> anyhow::Result<Vec<(String, String, String
         if chapter_list.is_empty() {
             continue;
         }
-        let latest_chapter = &chapter_list.first().unwrap().0;
+        let latest_chapter = chapter_list.first().unwrap();
         println!("{} {}", name, latest_chapter);
         if chapter_before.contains_key(name) && !chapter_before.get(name).unwrap().eq(latest_chapter) {
-            for (chapter_name, link) in &chapter_list {
+            for chapter_name in &chapter_list {
                 if chapter_name == chapter_before.get(name).unwrap() {
                     break;
                 }
-                latest_chapter_list.push((name.to_string(), chapter_name.clone(), link.clone()));
+                latest_chapter_list.push((name.to_string(), chapter_name.clone()));
             }
         }
         latest_chapter_next.push((name.to_string(), latest_chapter.to_string()));
@@ -70,7 +69,7 @@ fn read_lastest_chapter() -> anyhow::Result<Vec<(String, String)>> {
     Ok(result)
 }
 
-/// 获取章节列表
+/// 获取章节列表-从 colamanga 获取，总被墙
 /// 
 /// input:
 /// @id: 漫画的 id，如 manga-pk25498 斗破苍穹
@@ -78,25 +77,45 @@ fn read_lastest_chapter() -> anyhow::Result<Vec<(String, String)>> {
 /// Vec<(String, String)>: 章节名称、章节链接
 /// 
 /// 直接使用 http 请求会bei拦截，需要使用 curl 命令，原理不详
-async fn get_chapter_list(id: &str) -> anyhow::Result<Vec<(String, String)>> {
-    let output = Command::new("curl").arg(format!("https://www.colamanga.com/{id}/")).output().await?;
-    let mut resp = "".to_string();
-    // 检查命令是否成功执行
-    if output.status.success() {
-        // 将输出从字节转换为字符串
-        resp = String::from_utf8_lossy(&output.stdout).to_string();
-    } else {
-        // 处理错误信息
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("Command failed with error: {}", stderr);
-    }
-    let mut chapter_list: Vec<(String, String)> = Vec::new();
-    let document = scraper::Html::parse_document(&resp);
-    let selector = scraper::Selector::parse(r#"a[class="fed-btns-info fed-rims-info fed-part-eone"]"#).unwrap();
+// async fn get_chapter_list(id: &str) -> anyhow::Result<Vec<(String, String)>> {
+//     let output = Command::new("curl").arg(format!("https://www.colamanga.com/{id}/")).output().await?;
+//     let mut resp = "".to_string();
+//     // 检查命令是否成功执行
+//     if output.status.success() {
+//         // 将输出从字节转换为字符串
+//         resp = String::from_utf8_lossy(&output.stdout).to_string();
+//     } else {
+//         // 处理错误信息
+//         let stderr = String::from_utf8_lossy(&output.stderr);
+//         eprintln!("Command failed with error: {}", stderr);
+//     }
+//     let mut chapter_list: Vec<(String, String)> = Vec::new();
+//     let document = scraper::Html::parse_document(&resp);
+//     let selector = scraper::Selector::parse(r#"a[class="fed-btns-info fed-rims-info fed-part-eone"]"#).unwrap();
+//     for element in document.select(&selector) {
+//         // assert_eq!("a", element.value().name());
+//         chapter_list.push((element.text().collect::<String>().trim().to_string(), element.attr("href").unwrap().to_string()));
+//     }
+//     Ok(chapter_list)
+// }
+
+/// 获取章节列表
+/// 
+/// input:
+/// @id: 漫画的 id，如 manga-pk25498 斗破苍穹
+/// output:
+/// Vec<String>: 章节名称
+async fn get_chapter_list(id: &str) -> anyhow::Result<Vec<String>> {
+    let mut chapter_list = Vec::new();
+
+    let url = format!("https://m.ac.qq.com/comic/index/id/{id}");
+    let html = reqwest::get(url).await?.text().await?;
+    let document = scraper::Html::parse_document(&html);
+    let selector = scraper::Selector::parse(r#"ul[class="chapter-wrap-list reverse hide"] > li[class="bottom-chapter-item"] > a > div[class="comic-info"] > span[class="comic-title"]"#).unwrap();
     for element in document.select(&selector) {
-        // assert_eq!("a", element.value().name());
-        chapter_list.push((element.text().collect::<String>().trim().to_string(), element.attr("href").unwrap().to_string()));
+        chapter_list.push(element.text().collect::<String>().trim().to_string());
     }
+
     Ok(chapter_list)
 }
 
@@ -107,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_get_chapter_list() {
-        let id = "manga-pk25498";
+        let id = "531490";
         let chapters =  tokio_test::block_on(get_chapter_list(id)).unwrap();
         println!("{:?}", chapters);
     }

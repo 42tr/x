@@ -22,7 +22,7 @@ jobs:
         override: true
 
     - name: Build project
-      run: cargo build --release
+      run: RUSTFLAGS='-C target-feature=+crt-static' cargo build --release
 
     - name: Create directory
       uses: appleboy/ssh-action@master

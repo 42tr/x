@@ -23,6 +23,9 @@ pub async fn get_latest_chapters() -> anyhow::Result<Vec<(String, String, String
     
     for (id, name) in comics {
         let chapter_list= get_chapter_list(id).await?;
+        if chapter_list.is_empty() {
+            continue;
+        }
         let latest_chapter = &chapter_list.first().unwrap().0;
         println!("{} {}", name, latest_chapter);
         if chapter_before.contains_key(name) && !chapter_before.get(name).unwrap().eq(latest_chapter) {

@@ -55,7 +55,7 @@ jobs:
           cd /home/x/
           killall x
           rm -rf x
-          mv target/release/x ./
+          mv target/x86_64-unknown-linux-musl/release/x ./
           chmod 777 x
           rm -rf target
           export EMAIL_AUTHORIZE_CODE=${{ secrets.EMAIL_AUTHORIZE_CODE }}

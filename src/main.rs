@@ -6,6 +6,7 @@ mod stock;
 mod news;
 mod leetcode;
 mod comic;
+mod weather;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -39,10 +40,12 @@ async fn send_email() -> anyhow::Result<()> {
     let gold_line_png = gold::create_line().await?;
     let stock_line_png = stock::create_line().await?;
     let comics = comic::get_latest_chapters().await?;
+    let weathers = weather::get().await?;
 
     let content = format!(r#"
         <html>
             <body>
+                {}
                 <h2>LeetCode</h2>
                 <ul>
                     <li>
@@ -53,12 +56,15 @@ async fn send_email() -> anyhow::Result<()> {
                 <img src="cid:{gold_line_png}" />
                 <h2>上证指数</h2>
                 <img src="cid:{stock_line_png}" />
-                <h2>新闻</h2>
                 {}
+                <h2>新闻</h2>
                 {}
             </body>
         </html>
-    "#, concat_news(news_times, news_links, news_titles), concat_comic(comics));
+    "#,
+    concat_weather(weathers),
+    concat_comic(comics),
+    concat_news(news_times, news_links, news_titles));
     
     email::send_with_file(
         "1055894396@qq.com".to_string(),
@@ -88,4 +94,11 @@ fn concat_comic(comics: Vec<(String, String)>) -> String {
         return "".to_owned();
     }
     "<h2>漫画</h2><ul>".to_owned() + &comics.into_iter().map(|(name, chapter_name)| format!(r#"<li>{} {}</li>"#, name, chapter_name)).collect::<Vec<_>>().join("") + "</ul>"
+}
+
+fn concat_weather(weathers: Vec<String>) -> String {
+    if weathers.is_empty() {
+        return "".to_owned();
+    }
+    "<h2>天气</h2><ul>".to_owned() + &weathers.into_iter().map(|weather| format!(r#"<li>{}</li>"#, weather)).collect::<Vec<_>>().join("") + "</ul>"
 }

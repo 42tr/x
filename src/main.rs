@@ -7,6 +7,7 @@ mod news;
 mod leetcode;
 mod comic;
 mod weather;
+mod saying;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -44,7 +45,7 @@ async fn send_email() -> anyhow::Result<()> {
 
     let content = format!(r#"
         <html>
-            <body>
+            <body>{}
                 {}
                 <h2>LeetCode</h2>
                 <ul>
@@ -62,6 +63,7 @@ async fn send_email() -> anyhow::Result<()> {
             </body>
         </html>
     "#,
+    saying::get().await?,
     concat_weather(weathers),
     concat_comic(comics),
     concat_news(news_times, news_links, news_titles));

@@ -59,4 +59,4 @@ jobs:
           chmod 777 x
           rm -rf target
           export EMAIL_AUTHORIZE_CODE=${{ secrets.EMAIL_AUTHORIZE_CODE }}
-          nohup ./x > /dev/null 2>&1 &
+          nohup ./x > log.txt 2>&1 &

@@ -21,6 +21,7 @@ pub async fn get() -> anyhow::Result<(Vec<String>, Vec<String>, Vec<String>)> {
         );
         headers.insert("Cookie", reqwest::header::HeaderValue::from_str(token.as_str()).unwrap());
         headers.insert("Referer", reqwest::header::HeaderValue::from_str("https://xueqiu.com/").unwrap());
+        println!("xueqiu request: {:?}", headers);
         let content = cli.get(url.clone()).headers(headers.clone()).send().await?.text().await?;
         println!("xueqiu response: {}", content);
         let resp: Rsp = cli.get(url).headers(headers).send().await?.json().await?;
@@ -54,10 +55,12 @@ pub struct News {
 }
 
 async fn get_token() -> anyhow::Result<String> {
-    let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DQIhbOW%3DD9e8oDx";
+    // let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DQIhbOW%3DD9e8oDx";
+    let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DD9lRKTMqD5dx";
     let cli = reqwest::Client::new();
     let resp = cli.get(url).send().await?;
     let headers = resp.headers();
+    println!("token response: {:?}", headers);
     let token = headers.get_all("set-cookie").into_iter().map(|x| {
         x.to_str().unwrap()
     }).collect::<Vec<_>>().join("; ");

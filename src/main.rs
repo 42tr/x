@@ -36,12 +36,12 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn send_email() -> anyhow::Result<()> {
-    let (lc_name, lc_href) = leetcode::daily_question().await?;
-    let (news_times, news_links, news_titles) = news::get().await?;
-    let gold_line_png = gold::create_line().await?;
-    let stock_line_png = stock::create_line().await?;
-    let comics = comic::get_latest_chapters().await?;
-    let weathers = weather::get().await?;
+    let (lc_name, lc_href) = leetcode::daily_question().await.expect("get leetcode question failed");
+    let (news_times, news_links, news_titles) = news::get().await.expect("get news failed");
+    let gold_line_png = gold::create_line().await.expect("get gold line failed");
+    let stock_line_png = stock::create_line().await.expect("get stock line failed");
+    let comics = comic::get_latest_chapters().await.expect("get comics failed");
+    let weathers = weather::get().await.expect("get weather failed");
 
     let content = format!(r#"
         <html>
@@ -63,7 +63,7 @@ async fn send_email() -> anyhow::Result<()> {
             </body>
         </html>
     "#,
-    saying::get().await?,
+    saying::get().await.expect("get saying error"),
     concat_weather(weathers),
     concat_comic(comics),
     concat_news(news_times, news_links, news_titles));

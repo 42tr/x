@@ -3,6 +3,7 @@ use chrono_tz::Tz;
 
 pub async fn get() -> anyhow::Result<(Vec<String>, Vec<String>, Vec<String>)> {
     let token = get_token().await?;
+    println!("xueqiu token: {}", token);
     let mut max_id = 0;
     let timestamp = Utc::now().timestamp_millis() - 24 * 60 * 60 * 1000;
     let (mut times, mut links, mut titles) = (vec![], vec![], vec![]);
@@ -19,6 +20,9 @@ pub async fn get() -> anyhow::Result<(Vec<String>, Vec<String>, Vec<String>)> {
             reqwest::header::HeaderValue::from_str("application/json").unwrap(),
         );
         headers.insert("Cookie", reqwest::header::HeaderValue::from_str(token.as_str()).unwrap());
+        headers.insert("Referer", reqwest::header::HeaderValue::from_str("https://xueqiu.com/").unwrap());
+        let content = cli.get(url.clone()).headers(headers.clone()).send().await?.text().await?;
+        println!("xueqiu response: {}", content);
         let resp: Rsp = cli.get(url).headers(headers).send().await?.json().await?;
         if resp.items.len() > 0 && resp.items[0].created_at < timestamp {
             break;

@@ -1,5 +1,5 @@
+use charts_rs::{svg_to_png, BarChart, Box, SeriesCategory, THEME_ANT};
 use chrono::{TimeZone, Utc};
-use charts_rs::{ BarChart, Box, SeriesCategory, THEME_ANT, svg_to_png };
 
 /// 生成折线图
 /// 返回折线图的名称
@@ -13,14 +13,10 @@ pub async fn create_line() -> anyhow::Result<String> {
         }
     });
     axis_min = ((axis_min as i32 / 10) * 10) as f32;
-    let mut bar_chart = BarChart::new_with_theme(
-        vec![("RMB", prices).into(),],
-        dates,
-        THEME_ANT,
-    );
+    let mut bar_chart = BarChart::new_with_theme(vec![("RMB", prices).into()], dates, THEME_ANT);
     bar_chart.y_axis_configs[0].axis_min = Some(axis_min);
 
-    bar_chart.width = 1200.0;
+    bar_chart.width = 1000.0;
     bar_chart.title_text = "Gold Info".to_string();
     bar_chart.legend_margin = Some(Box {
         top: bar_chart.title_height,
@@ -45,9 +41,11 @@ async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
     );
     headers.insert(
         "referer",
-        reqwest::header::HeaderValue::from_str("https://quote.cngold.org/gjs/swhj_zghj.html").unwrap(),
+        reqwest::header::HeaderValue::from_str("https://quote.cngold.org/gjs/swhj_zghj.html")
+            .unwrap(),
     );
-    let url = "https://api.jijinhao.com/quoteCenter/historys.htm?codes=JO_52683&style=3&pageSize=180";
+    let url =
+        "https://api.jijinhao.com/quoteCenter/historys.htm?codes=JO_52683&style=3&pageSize=180";
     let resp = cli.get(url).headers(headers).send().await?.text().await?;
     let resp = resp.replace("var quote_json = ", "");
     let rsp: Rsp = serde_json::from_str(&resp).unwrap();
@@ -55,7 +53,12 @@ async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
     let mut dates = vec![];
     let mut prices = vec![];
     data.iter().for_each(|d| {
-        dates.push(Utc.timestamp_opt(d.time / 1000, 0).unwrap().format("%m-%d").to_string());
+        dates.push(
+            Utc.timestamp_opt(d.time / 1000, 0)
+                .unwrap()
+                .format("%m-%d")
+                .to_string(),
+        );
         prices.push(d.q1);
     });
     Ok((dates, prices))

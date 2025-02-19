@@ -1,19 +1,21 @@
+use charts_rs::{svg_to_png, BarChart, Box, SeriesCategory, THEME_ANT};
 use chrono::{TimeZone, Utc};
-use charts_rs::{ BarChart, Box, SeriesCategory, THEME_ANT, svg_to_png };
 
 /// 返回折线图的名称
 pub async fn create_line() -> anyhow::Result<String> {
     let (dates, prices) = get_info().await?;
 
-    let axis_min = prices.clone().into_iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap_or(0.0) as i32 / 100 * 100;
-    let mut bar_chart = BarChart::new_with_theme(
-        vec![("Point", prices).into(),],
-        dates,
-        THEME_ANT,
-    );
+    let axis_min = prices
+        .clone()
+        .into_iter()
+        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap_or(0.0) as i32
+        / 100
+        * 100;
+    let mut bar_chart = BarChart::new_with_theme(vec![("Point", prices).into()], dates, THEME_ANT);
     bar_chart.y_axis_configs[0].axis_min = Some(axis_min as f32);
 
-    bar_chart.width = 1200.0;
+    bar_chart.width = 1000.0;
     bar_chart.title_text = "SSE Index".to_string();
     bar_chart.legend_margin = Some(Box {
         top: bar_chart.title_height,
@@ -39,17 +41,26 @@ async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
         "User-Agent",
         reqwest::header::HeaderValue::from_str("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36").unwrap(),
     );
-    headers.insert("Content-Type", 
+    headers.insert(
+        "Content-Type",
         reqwest::header::HeaderValue::from_str("application/json").unwrap(),
     );
-    headers.insert("Cookie", reqwest::header::HeaderValue::from_str(token.as_str()).unwrap());
+    headers.insert(
+        "Cookie",
+        reqwest::header::HeaderValue::from_str(token.as_str()).unwrap(),
+    );
     let resp: Rsp = cli.get(url).headers(headers).send().await?.json().await?;
-    
+
     let mut dates = vec![];
     let mut prices = vec![];
     resp.data.item.iter().for_each(|item| {
         match &item[0] {
-            Value::Float(f) => dates.push(Utc.timestamp_opt(*f as i64 / 1000, 0).unwrap().format("%m-%d").to_string()),
+            Value::Float(f) => dates.push(
+                Utc.timestamp_opt(*f as i64 / 1000, 0)
+                    .unwrap()
+                    .format("%m-%d")
+                    .to_string(),
+            ),
             _default => {}
         }
         match &item[5] {
@@ -81,9 +92,12 @@ async fn get_token() -> anyhow::Result<String> {
     let cli = reqwest::Client::new();
     let resp = cli.get(url).send().await?;
     let headers = resp.headers();
-    let token = headers.get_all("set-cookie").into_iter().map(|x| {
-        x.to_str().unwrap()
-    }).collect::<Vec<_>>().join("; ");
+    let token = headers
+        .get_all("set-cookie")
+        .into_iter()
+        .map(|x| x.to_str().unwrap())
+        .collect::<Vec<_>>()
+        .join("; ");
     Ok(token.to_string())
 }
 

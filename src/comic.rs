@@ -1,8 +1,9 @@
 use anyhow::Ok;
+use log::info;
 use std::{collections::HashMap, io::Write};
 
 /// 获取最新章节
-/// 
+///
 /// output:
 /// Vec<(String, String)>: 漫画名称、最新章节名称
 /// 关注漫画 manga-pk25498 斗破苍穹、manga-fb45571 一人之下、manga-wq98740 妖神记、manga-pv587814 海贼王
@@ -19,15 +20,17 @@ pub async fn get_latest_chapters() -> anyhow::Result<Vec<(String, String)>> {
     let latest_chapter_before = read_lastest_chapter()?;
     let mut latest_chapter_next: Vec<(String, String)> = vec![];
     let chapter_before: HashMap<String, String> = latest_chapter_before.into_iter().collect();
-    
+
     for (id, name) in comics {
-        let chapter_list= get_chapter_list(id).await?;
+        let chapter_list = get_chapter_list(id).await?;
         if chapter_list.is_empty() {
             continue;
         }
         let latest_chapter = chapter_list.first().unwrap();
-        println!("{} {}", name, latest_chapter);
-        if chapter_before.contains_key(name) && !chapter_before.get(name).unwrap().eq(latest_chapter) {
+        info!("{} {}", name, latest_chapter);
+        if chapter_before.contains_key(name)
+            && !chapter_before.get(name).unwrap().eq(latest_chapter)
+        {
             for chapter_name in &chapter_list {
                 if chapter_name == chapter_before.get(name).unwrap() {
                     break;
@@ -70,13 +73,13 @@ fn read_lastest_chapter() -> anyhow::Result<Vec<(String, String)>> {
 }
 
 /// 获取章节列表-从 colamanga 获取，总被墙
-/// 
+///
 /// input:
 /// @id: 漫画的 id，如 manga-pk25498 斗破苍穹
 /// output:
 /// Vec<(String, String)>: 章节名称、章节链接
-/// 
-/// 直接使用 http 请求会bei拦截，需要使用 curl 命令，原理不详
+///
+/// 直接使用 http 请求会被拦截，需要使用 curl 命令，原理不详
 // async fn get_chapter_list(id: &str) -> anyhow::Result<Vec<(String, String)>> {
 //     let output = Command::new("curl").arg(format!("https://www.colamanga.com/{id}/")).output().await?;
 //     let mut resp = "".to_string();
@@ -100,7 +103,7 @@ fn read_lastest_chapter() -> anyhow::Result<Vec<(String, String)>> {
 // }
 
 /// 获取章节列表
-/// 
+///
 /// input:
 /// @id: 漫画的 id，如 manga-pk25498 斗破苍穹
 /// output:
@@ -119,7 +122,6 @@ async fn get_chapter_list(id: &str) -> anyhow::Result<Vec<String>> {
     Ok(chapter_list)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -127,7 +129,7 @@ mod tests {
     #[test]
     fn test_get_chapter_list() {
         let id = "531490";
-        let chapters =  tokio_test::block_on(get_chapter_list(id)).unwrap();
-        println!("{:?}", chapters);
+        let chapters = tokio_test::block_on(get_chapter_list(id)).unwrap();
+        info!("{:?}", chapters);
     }
 }

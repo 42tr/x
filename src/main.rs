@@ -1,3 +1,4 @@
+use log::info;
 use news::obtain_latest_news;
 use sqlx::mysql::MySqlPool;
 use tokio_cron_scheduler::{Job, JobScheduler};
@@ -11,15 +12,20 @@ mod saying;
 mod stock;
 mod weather;
 
-/// 检查运行环境
+/// 检查运行环境（环境变量）
+///
+/// EMAIL_AUTHORIZE_CODE 用于发送邮件
+/// DATABASE_URL 用于连接数据库
 fn check_runtime_environment() {
     dotenv::dotenv().ok(); // 从 .env 加载环境变量，开发环境用
     std::env::var("EMAIL_AUTHORIZE_CODE").expect("Cannot get env EMAIL_AUTHORIZE_CODE");
+    std::env::var("DATABASE_URL").expect("Cannot get env DATABASE_URL");
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    check_runtime_environment();
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap(); // 初始化日志
+    check_runtime_environment(); // 检查运行环境
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
     let pool = MySqlPool::connect(&database_url).await?;
@@ -33,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
         .add(Job::new_async("0 * * * * *", move |_uuid, mut _l| {
             let pool = pool1.clone();
             Box::pin(async move {
-                println!(
+                info!(
                     "Start Obtain news !!! Current time: {:?}",
                     std::time::SystemTime::now()
                 );
@@ -45,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
         .add(Job::new_async("0 0 0 * * *", move |_uuid, mut _l| {
             let pool = pool2.clone();
             Box::pin(async move {
-                println!(
+                info!(
                     "Start schedule !!! Current time: {:?}",
                     std::time::SystemTime::now()
                 );
@@ -55,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     sched.start().await?;
 
-    println!("Main thread start !!!");
+    info!("Main thread start !!!");
 
     // 使主线程保持阻塞直到用户手动终止（例如按 Ctrl+C）
     tokio::signal::ctrl_c().await?;

@@ -1,6 +1,7 @@
 use anyhow::Ok;
 use chrono::{TimeZone, Utc};
 use chrono_tz::Tz;
+use log::{debug, info};
 use sqlx::mysql::MySqlPool;
 
 pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
@@ -30,7 +31,7 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
             "Referer",
             reqwest::header::HeaderValue::from_str("https://xueqiu.com/").unwrap(),
         );
-        println!("xueqiu request: {:?}", headers);
+        debug!("xueqiu request: {:?}", headers);
         let content = cli
             .get(url.clone())
             .headers(headers.clone())
@@ -38,7 +39,7 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
             .await?
             .text()
             .await?;
-        println!("xueqiu response: {}", content);
+        debug!("xueqiu response: {}", content);
         let resp: Rsp = cli.get(url).headers(headers).send().await?.json().await?;
         if resp.items.len() == 0 || resp.items[0].id <= id {
             break;
@@ -108,7 +109,7 @@ async fn get_token() -> anyhow::Result<String> {
     let cli = reqwest::Client::new();
     let resp = cli.get(url).send().await?;
     let headers = resp.headers();
-    println!("token response: {:?}", headers);
+    debug!("token response: {:?}", headers);
     let token = headers
         .get_all("set-cookie")
         .into_iter()
@@ -121,6 +122,9 @@ async fn get_token() -> anyhow::Result<String> {
 /// 插入数据库
 /// 可能会有重复的，使用 insert ignore 插入
 async fn save_news_list(pool: &MySqlPool, news_list: &Vec<NewsPO>) -> anyhow::Result<u64> {
+    if news_list.len() == 0 {
+        return Ok(0);
+    }
     let mut query =
         String::from("insert ignore into news (id, content, timestamp, target) values ");
     let params: Vec<String> = news_list.iter().map(|_| format!("(?, ?, ?, ?)")).collect();
@@ -133,6 +137,7 @@ async fn save_news_list(pool: &MySqlPool, news_list: &Vec<NewsPO>) -> anyhow::Re
             .bind(&news.timestamp)
             .bind(&news.target);
     }
+    info!("list: {:?}", news_list);
 
     let result = q.execute(pool).await?;
     Ok(result.rows_affected())
@@ -143,6 +148,6 @@ async fn get_latest_id(pool: &MySqlPool) -> u32 {
         .fetch_one(pool)
         .await
         .unwrap_or_else(|_| 3812705);
-    println!("latest id: {id}");
+    debug!("latest id: {id}");
     id
 }

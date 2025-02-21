@@ -55,6 +55,19 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
         });
     }
     save_news_list(pool, &news_list).await?;
+    send_message(&news_list).await?;
+    Ok(())
+}
+
+async fn send_message(news_list: &Vec<NewsPO>) -> anyhow::Result<()> {
+    for news in news_list {
+        reqwest::get(format!(
+            "http://106.15.62.248:9901/g34J3db8YQRgfdLS78TPfn/{}/{}",
+            news.timestamp, news.content
+        ))
+        .await?;
+    }
+
     Ok(())
 }
 

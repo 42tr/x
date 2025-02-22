@@ -13,6 +13,9 @@ mod stock;
 mod utils;
 mod weather;
 
+const GOLD_INFO_IMG_NAME: &str = "gold_line.png";
+const STOCK_INFO_IMG_NAME: &str = "sse_line.png";
+
 /// 检查运行环境（环境变量）
 ///
 /// EMAIL_AUTHORIZE_CODE 用于发送邮件
@@ -41,8 +44,8 @@ async fn main() -> anyhow::Result<()> {
             let pool = pool1.clone();
             Box::pin(async move {
                 info!(
-                    "Start Obtain news !!! Current time: {:?}",
-                    std::time::SystemTime::now()
+                    "Start Obtain news !!! Current time: {}",
+                    utils::currenttime()
                 );
                 obtain_latest_news(&pool).await.unwrap();
             })
@@ -74,8 +77,10 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
         .await
         .expect("get leetcode question failed");
     let (news_times, news_titles) = news::get(pool).await.expect("get news failed");
-    let gold_line_png = gold::create_line().await.expect("get gold line failed");
-    let stock_line_png = stock::create_line().await.expect("get stock line failed");
+    let gold = gold::get_info().await?;
+    utils::create_line_img("Gold Info", "RMB", GOLD_INFO_IMG_NAME, gold.0, gold.1)?;
+    let stock = stock::get_info().await?;
+    utils::create_line_img("SSE Index", "Point", STOCK_INFO_IMG_NAME, stock.0, stock.1)?;
     let comics = comic::get_latest_chapters()
         .await
         .expect("get comics failed");
@@ -93,9 +98,9 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
                     </li>
                 </ul>
                 <h2>黄金价格</h2>
-                <img src="cid:{gold_line_png}" />
+                <img src="cid:{GOLD_INFO_IMG_NAME}" />
                 <h2>上证指数</h2>
-                <img src="cid:{stock_line_png}" />
+                <img src="cid:{STOCK_INFO_IMG_NAME}" />
                 {}
                 <h2>新闻</h2>
                 {}
@@ -112,11 +117,10 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
         "1055894396@qq.com".to_string(),
         "每日速递".to_string(),
         content.to_string(),
-        vec![gold_line_png.clone(), stock_line_png.clone()],
-    )
-    .unwrap();
-    std::fs::remove_file(gold_line_png).unwrap();
-    std::fs::remove_file(stock_line_png).unwrap();
+        vec![GOLD_INFO_IMG_NAME, STOCK_INFO_IMG_NAME],
+    )?;
+    std::fs::remove_file(GOLD_INFO_IMG_NAME).unwrap();
+    std::fs::remove_file(STOCK_INFO_IMG_NAME).unwrap();
     Ok(())
 }
 

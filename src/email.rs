@@ -2,7 +2,7 @@ use lettre::message::header::{self, Header};
 use lettre::message::{MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
-use log::info;
+use log::{error, info};
 
 // /// 发送邮件
 // ///
@@ -44,7 +44,7 @@ pub fn send_with_file(
     receiver: String,
     subject: String,
     content: String,
-    files: Vec<String>,
+    files: Vec<&str>,
 ) -> anyhow::Result<()> {
     // get AUTHORIZE CODE from env param
     let authorize_code =
@@ -84,7 +84,7 @@ pub fn send_with_file(
         .build();
     match mailer.send(&email) {
         Ok(_) => info!("邮件发送成功!"),
-        Err(e) => panic!("发送邮件失败: {e:?}"),
+        Err(e) => error!("发送邮件失败: {e:?}"),
     }
     Ok(())
 }

@@ -1,36 +1,6 @@
-use charts_rs::{svg_to_png, BarChart, Box, SeriesCategory, THEME_ANT};
 use chrono::{TimeZone, Utc};
 
-/// 返回折线图的名称
-pub async fn create_line() -> anyhow::Result<String> {
-    let (dates, prices) = get_info().await?;
-
-    let axis_min = prices
-        .clone()
-        .into_iter()
-        .min_by(|a, b| a.partial_cmp(b).unwrap())
-        .unwrap_or(0.0) as i32
-        / 100
-        * 100;
-    let mut bar_chart = BarChart::new_with_theme(vec![("Point", prices).into()], dates, THEME_ANT);
-    bar_chart.y_axis_configs[0].axis_min = Some(axis_min as f32);
-
-    bar_chart.width = 1000.0;
-    bar_chart.title_text = "SSE Index".to_string();
-    bar_chart.legend_margin = Some(Box {
-        top: bar_chart.title_height,
-        bottom: 5.0,
-        ..Default::default()
-    });
-    bar_chart.series_list[0].category = Some(SeriesCategory::Line);
-    bar_chart.series_list[0].y_axis_index = 1;
-    bar_chart.series_list[0].label_show = false;
-    let png = svg_to_png(&bar_chart.svg().unwrap()).unwrap();
-    std::fs::write("sse_line.png", png).unwrap();
-    Ok("sse_line.png".to_string())
-}
-
-async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
+pub async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
     let token = get_token().await?;
     // 获取当前时间戳
     let timestamp = Utc::now().timestamp_millis();

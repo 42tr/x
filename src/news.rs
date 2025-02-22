@@ -73,7 +73,7 @@ pub async fn get(pool: &MySqlPool) -> anyhow::Result<(Vec<String>, Vec<String>)>
     .await?;
     let (mut times, mut titles) = (vec![], vec![]);
     for news in news_list {
-        times.push(utils::timestamp2time(news.timestamp / 1000)?);
+        times.push(utils::timestamp2time(news.timestamp / 1000, "%m-%d %H:%M"));
         titles.push(news.content.to_string());
     }
     Ok((times, titles))

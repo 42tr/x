@@ -34,6 +34,7 @@ async fn main() -> anyhow::Result<()> {
     let pool = MySqlPool::connect(&database_url).await?;
     news::obtain_latest_news(&pool).await?;
     gold::obtain(&pool).await?;
+    stock::obtain(&pool).await?;
     send_email(&pool).await.unwrap();
 
     let sched = JobScheduler::new().await?;
@@ -60,6 +61,9 @@ async fn main() -> anyhow::Result<()> {
                     std::time::SystemTime::now()
                 );
                 gold::obtain(&pool).await.expect("obtain gold info failed!");
+                stock::obtain(&pool)
+                    .await
+                    .expect("obtain stock info failed!");
                 send_email(&pool).await.unwrap();
             })
         })?)
@@ -80,7 +84,7 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
     let (news_times, news_titles) = news::get(pool).await.expect("get news failed");
     let gold = gold::get_info(pool).await?;
     utils::create_line_img("Gold Info", "RMB", GOLD_INFO_IMG_NAME, gold.0, gold.1)?;
-    let stock = stock::get_info().await?;
+    let stock = stock::get_info(pool).await?;
     utils::create_line_img("SSE Index", "Point", STOCK_INFO_IMG_NAME, stock.0, stock.1)?;
     let comics = comic::get_latest_chapters()
         .await

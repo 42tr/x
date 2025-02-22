@@ -8,7 +8,13 @@ CREATE TABLE `news` (
 ) ENGINE = InnoDB;
 
 create table gold_info (
-    date varchar(32) not null comment '日期',
+    timestamp bigint not null comment '时间戳',
     price float not null comment '价格',
-    primary key (date)
+    primary key (timestamp)
+);
+
+create table stock_info (
+    timestamp bigint not null comment '时间戳',
+    price float not null comment '价格',
+    primary key (timestamp)
 );

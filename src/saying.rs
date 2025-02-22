@@ -1,8 +1,6 @@
 pub async fn get() -> anyhow::Result<String> {
     let url = "https://open.iciba.com/dsapi/";
     let rsp: Rsp = reqwest::Client::new().get(url).send().await?.json().await?;
-
-
     Ok(rsp.content.clone() + "<br>" + &rsp.note.clone())
 }
 

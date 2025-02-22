@@ -1,6 +1,9 @@
-use chrono::{TimeZone, Utc};
+use chrono::Utc;
+use sqlx::MySqlPool;
 
-pub async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
+use crate::utils;
+
+pub async fn obtain(pool: &MySqlPool) -> anyhow::Result<()> {
     let token = get_token().await?;
     // 获取当前时间戳
     let timestamp = Utc::now().timestamp_millis();
@@ -8,9 +11,9 @@ pub async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
     let cli = reqwest::Client::new();
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
-        "User-Agent",
-        reqwest::header::HeaderValue::from_str("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36").unwrap(),
-    );
+            "User-Agent",
+            reqwest::header::HeaderValue::from_str("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36").unwrap(),
+        );
     headers.insert(
         "Content-Type",
         reqwest::header::HeaderValue::from_str("application/json").unwrap(),
@@ -19,26 +22,52 @@ pub async fn get_info() -> anyhow::Result<(Vec<String>, Vec<f32>)> {
         "Cookie",
         reqwest::header::HeaderValue::from_str(token.as_str()).unwrap(),
     );
-    let resp: Rsp = cli.get(url).headers(headers).send().await?.json().await?;
+    let rsp: Rsp = cli.get(url).headers(headers).send().await?.json().await?;
+    let mut stocks: Vec<(i64, f32)> = vec![];
+    for item in rsp.data.item {
+        if let (Value::Float(timestamp), Value::Float(price)) = (&item[0], &item[5]) {
+            stocks.push((*timestamp as i64, *price));
+        }
+    }
+    save(pool, &stocks).await?;
+    Ok(())
+}
 
-    let mut dates = vec![];
-    let mut prices = vec![];
-    resp.data.item.iter().for_each(|item| {
-        match &item[0] {
-            Value::Float(f) => dates.push(
-                Utc.timestamp_opt(*f as i64 / 1000, 0)
-                    .unwrap()
-                    .format("%m-%d")
-                    .to_string(),
-            ),
-            _default => {}
-        }
-        match &item[5] {
-            Value::Float(f) => prices.push(*f),
-            _default => {}
-        }
-    });
+async fn save(pool: &MySqlPool, prices: &Vec<(i64, f32)>) -> anyhow::Result<()> {
+    if prices.len() == 0 {
+        return Ok(());
+    }
+    let mut query = String::from("insert ignore into stock_info (timestamp, price) values ");
+    let params: Vec<String> = prices.iter().map(|_| format!("(?, ?)")).collect();
+    query.push_str(&params.join(", "));
+    let mut q = sqlx::query(&query);
+    for price in prices {
+        q = q.bind(price.0).bind(price.1);
+    }
+
+    q.execute(pool).await?;
+    Ok(())
+}
+
+pub async fn get_info(pool: &MySqlPool) -> anyhow::Result<(Vec<String>, Vec<f32>)> {
+    let gold_info_list = sqlx::query_as!(
+            StockInfoPO,
+            "select * from (select * from stock_info order by timestamp desc limit 365) t order by timestamp",
+        )
+        .fetch_all(pool)
+        .await?;
+    let (mut dates, mut prices) = (vec![], vec![]);
+    for gold_info in gold_info_list {
+        dates.push(utils::timestamp2time(gold_info.timestamp / 1000, "%m-%d"));
+        prices.push(gold_info.price);
+    }
     Ok((dates, prices))
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct StockInfoPO {
+    timestamp: i64,
+    price: f32,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -76,14 +105,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_info() {
-        let (dates, prices) = tokio_test::block_on(get_info()).unwrap();
-        println!("dates: {:?}, prices: {:?}", dates, prices);
-    }
-
-    #[test]
     fn test_get_token() {
         let token = tokio_test::block_on(get_token()).unwrap();
         println!("token: {}", token);
+    }
+
+    #[test]
+    fn test_get_timestamp() {
+        println!("now: {}", Utc::now().timestamp_millis());
     }
 }

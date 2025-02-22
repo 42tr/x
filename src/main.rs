@@ -1,5 +1,4 @@
 use log::info;
-use news::obtain_latest_news;
 use sqlx::mysql::MySqlPool;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
@@ -33,7 +32,8 @@ async fn main() -> anyhow::Result<()> {
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
     let pool = MySqlPool::connect(&database_url).await?;
-    obtain_latest_news(&pool).await?;
+    news::obtain_latest_news(&pool).await?;
+    gold::obtain(&pool).await?;
     send_email(&pool).await.unwrap();
 
     let sched = JobScheduler::new().await?;
@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
                     "Start Obtain news !!! Current time: {}",
                     utils::currenttime()
                 );
-                obtain_latest_news(&pool).await.unwrap();
+                news::obtain_latest_news(&pool).await.unwrap();
             })
         })?)
         .await?;
@@ -59,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
                     "Start schedule !!! Current time: {:?}",
                     std::time::SystemTime::now()
                 );
+                gold::obtain(&pool).await.expect("obtain gold info failed!");
                 send_email(&pool).await.unwrap();
             })
         })?)
@@ -77,7 +78,7 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
         .await
         .expect("get leetcode question failed");
     let (news_times, news_titles) = news::get(pool).await.expect("get news failed");
-    let gold = gold::get_info().await?;
+    let gold = gold::get_info(pool).await?;
     utils::create_line_img("Gold Info", "RMB", GOLD_INFO_IMG_NAME, gold.0, gold.1)?;
     let stock = stock::get_info().await?;
     utils::create_line_img("SSE Index", "Point", STOCK_INFO_IMG_NAME, stock.0, stock.1)?;

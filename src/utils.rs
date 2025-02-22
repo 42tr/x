@@ -14,7 +14,7 @@ pub async fn send_message(content: &str) -> anyhow::Result<()> {
 /// 获取当前时间
 pub fn currenttime() -> String {
     let timestamp = Local::now().timestamp();
-    timestamp2time(timestamp, "%y-%m-%d %H:%M")
+    timestamp2time(timestamp, "%Y-%m-%d %H:%M")
 }
 
 /// 时间戳转时间 %y-%m-%d %H:%M
@@ -52,4 +52,15 @@ pub fn create_line_img(
     let png = svg_to_png(&bar_chart.svg()?)?;
     std::fs::write(file_name, png).unwrap();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_currenttime() {
+        let time = currenttime();
+        println!("now: {time}");
+    }
 }

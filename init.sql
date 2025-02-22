@@ -6,3 +6,9 @@ CREATE TABLE `news` (
     PRIMARY KEY (`id`),
     KEY `time` (`timestamp`) USING BTREE
 ) ENGINE = InnoDB;
+
+create table gold_info (
+    date varchar(32) not null comment '日期',
+    price float not null comment '价格',
+    primary key (date)
+);

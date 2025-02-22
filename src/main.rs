@@ -10,6 +10,7 @@ mod leetcode;
 mod news;
 mod saying;
 mod stock;
+mod utils;
 mod weather;
 
 /// 检查运行环境（环境变量）

@@ -1,7 +1,8 @@
+use crate::utils;
+
 use anyhow::Ok;
-use chrono::{TimeZone, Utc};
-use chrono_tz::Tz;
-use log::{debug, info};
+use chrono::Utc;
+use log::debug;
 use sqlx::mysql::MySqlPool;
 
 pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
@@ -54,20 +55,11 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
             })
         });
     }
-    save_news_list(pool, &news_list).await?;
-    send_message(&news_list).await?;
-    Ok(())
-}
-
-async fn send_message(news_list: &Vec<NewsPO>) -> anyhow::Result<()> {
-    for news in news_list {
-        reqwest::get(format!(
-            "http://106.15.62.248:9901/tXfsoXKwoUD2U9gSoRrJbY/{}/{}",
-            news.timestamp, news.content
-        ))
-        .await?;
+    for news in &news_list {
+        if save_news(pool, news).await.is_ok() {
+            utils::send_message(&news.content).await?;
+        }
     }
-
     Ok(())
 }
 
@@ -80,17 +72,10 @@ pub async fn get(pool: &MySqlPool) -> anyhow::Result<(Vec<String>, Vec<String>)>
     .fetch_all(pool)
     .await?;
     let (mut times, mut titles) = (vec![], vec![]);
-    let shanghai: Tz = "Asia/Shanghai".parse().unwrap();
-    news_list.iter().for_each(|news| {
-        times.push(
-            shanghai
-                .timestamp_opt(news.timestamp / 1000, 0)
-                .unwrap()
-                .format("%m-%d %H:%M")
-                .to_string(),
-        );
+    for news in news_list {
+        times.push(utils::timestamp2time(news.timestamp / 1000)?);
         titles.push(news.content.to_string());
-    });
+    }
     Ok((times, titles))
 }
 
@@ -132,27 +117,15 @@ async fn get_token() -> anyhow::Result<String> {
     Ok(token.to_string())
 }
 
-/// 插入数据库
-/// 可能会有重复的，使用 insert ignore 插入
-async fn save_news_list(pool: &MySqlPool, news_list: &Vec<NewsPO>) -> anyhow::Result<u64> {
-    if news_list.len() == 0 {
-        return Ok(0);
-    }
+async fn save_news(pool: &MySqlPool, news: &NewsPO) -> anyhow::Result<u64> {
     let mut query =
-        String::from("insert ignore into news (id, content, timestamp, target) values ");
-    let params: Vec<String> = news_list.iter().map(|_| format!("(?, ?, ?, ?)")).collect();
-    query.push_str(&params.join(", "));
-    let mut q = sqlx::query(&query);
-    for news in news_list {
-        q = q
-            .bind(&news.id)
-            .bind(&news.content)
-            .bind(&news.timestamp)
-            .bind(&news.target);
-    }
-    info!("list: {:?}", news_list);
-
-    let result = q.execute(pool).await?;
+        sqlx::query("insert into news(id, content, timestamp, target) values (?, ?, ?, ?)");
+    query = query
+        .bind(&news.id)
+        .bind(&news.content)
+        .bind(&news.timestamp)
+        .bind(&news.target);
+    let result = query.execute(pool).await?;
     Ok(result.rows_affected())
 }
 

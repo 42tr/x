@@ -34,10 +34,10 @@ pub fn create_line_img(
     keys: Vec<String>,
     values: Vec<f32>,
 ) -> anyhow::Result<()> {
-    let axis_min = values.iter().copied().reduce(f32::min).unwrap_or(10000.0);
+    let axis_min = values.iter().copied().reduce(f32::min).unwrap_or(0.0);
     let mut bar_chart =
         BarChart::new_with_theme(vec![(series_name, values).into()], keys, THEME_ANT);
-    bar_chart.y_axis_configs[0].axis_min = Some(axis_min / 100f32 * 100f32);
+    bar_chart.y_axis_configs[0].axis_min = Some((axis_min / 100f32).floor() * 100f32);
 
     bar_chart.width = 1000.0;
     bar_chart.title_text = title.to_string();

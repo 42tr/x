@@ -77,8 +77,8 @@ mod tests {
 
     #[test]
     fn test_get_info() {
-        let (name, link) = tokio_test::block_on(get_info()).unwrap();
-        println!("name: {:?}, link: {:?}", name, link);
+        let (dates, prices) = tokio_test::block_on(get_info()).unwrap();
+        println!("dates: {:?}, prices: {:?}", dates, prices);
     }
 
     #[test]

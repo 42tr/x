@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
                 stock::obtain(&pool)
                     .await
                     .expect("obtain stock info failed!");
-                send_email(&pool).await.unwrap();
+                send_email(&pool).await.expect("send email failed!");
             })
         })?)
         .await?;
@@ -81,7 +81,6 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
     let (lc_name, lc_href) = leetcode::daily_question()
         .await
         .expect("get leetcode question failed");
-    let (news_times, news_titles) = news::get(pool).await.expect("get news failed");
     let gold = gold::get_info(pool).await?;
     utils::create_line_img("Gold Info", "RMB", GOLD_INFO_IMG_NAME, gold.0, gold.1)?;
     let stock = stock::get_info(pool).await?;
@@ -107,15 +106,12 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
                 <h2>上证指数</h2>
                 <img src="cid:{STOCK_INFO_IMG_NAME}" />
                 {}
-                <h2>新闻</h2>
-                {}
             </body>
         </html>
     "#,
         saying::get().await.expect("get saying error"),
         concat_weather(weathers),
-        concat_comic(comics),
-        concat_news(news_times, news_titles)
+        concat_comic(comics)
     );
 
     email::send_with_file(
@@ -129,21 +125,21 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn concat_news(news_times: Vec<String>, news_titles: Vec<String>) -> String {
-    let mut news_content = String::new();
-    news_content += "<ul>";
-    for (i, news_time) in news_times.iter().enumerate() {
-        news_content += &format!(
-            r#"
-            <li>
-                {} {}
-            </li>
-        "#,
-            news_time, news_titles[i]
-        );
-    }
-    news_content + "</ul>"
-}
+// fn concat_news(news_times: Vec<String>, news_titles: Vec<String>) -> String {
+//     let mut news_content = String::new();
+//     news_content += "<ul>";
+//     for (i, news_time) in news_times.iter().enumerate() {
+//         news_content += &format!(
+//             r#"
+//             <li>
+//                 {} {}
+//             </li>
+//         "#,
+//             news_time, news_titles[i]
+//         );
+//     }
+//     news_content + "</ul>"
+// }
 
 fn concat_comic(comics: Vec<(String, String)>) -> String {
     if comics.is_empty() {
@@ -169,4 +165,17 @@ fn concat_weather(weathers: Vec<String>) -> String {
             .collect::<Vec<_>>()
             .join("")
         + "</ul>"
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_send_weather() {
+        let weathers = tokio_test::block_on(weather::get()).unwrap();
+        let weather = weathers.join("%0a");
+        tokio_test::block_on(utils::send_message(&weather)).unwrap();
+        println!("{weather}");
+    }
 }

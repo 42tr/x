@@ -1,7 +1,6 @@
 use crate::utils;
 
 use anyhow::Ok;
-use chrono::Utc;
 use log::debug;
 use sqlx::mysql::MySqlPool;
 
@@ -55,29 +54,24 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
             })
         });
     }
-    for news in &news_list {
-        if save_news(pool, news).await.is_ok() {
-            utils::send_message(&news.content).await?;
-        }
-    }
     Ok(())
 }
 
-pub async fn get(pool: &MySqlPool) -> anyhow::Result<(Vec<String>, Vec<String>)> {
-    let news_list = sqlx::query_as!(
-        NewsPO,
-        "select * from news where timestamp > ?",
-        Utc::now().timestamp_millis() - 24 * 60 * 60 * 1000
-    )
-    .fetch_all(pool)
-    .await?;
-    let (mut times, mut titles) = (vec![], vec![]);
-    for news in news_list {
-        times.push(utils::timestamp2time(news.timestamp / 1000, "%m-%d %H:%M"));
-        titles.push(news.content.to_string());
-    }
-    Ok((times, titles))
-}
+// pub async fn get(pool: &MySqlPool) -> anyhow::Result<(Vec<String>, Vec<String>)> {
+//     let news_list = sqlx::query_as!(
+//         NewsPO,
+//         "select * from news where timestamp > ?",
+//         Utc::now().timestamp_millis() - 24 * 60 * 60 * 1000
+//     )
+//     .fetch_all(pool)
+//     .await?;
+//     let (mut times, mut titles) = (vec![], vec![]);
+//     for news in news_list {
+//         times.push(utils::timestamp2time(news.timestamp / 1000, "%m-%d %H:%M"));
+//         titles.push(news.content.to_string());
+//     }
+//     Ok((times, titles))
+// }
 
 #[derive(Debug, serde::Deserialize)]
 struct NewsPO {

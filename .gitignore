@@ -2,3 +2,4 @@
 /logs
 .env
 latest_chapter.txt
+**/.DS_Store

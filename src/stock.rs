@@ -87,7 +87,7 @@ enum Value {
 
 async fn get_token() -> anyhow::Result<String> {
     // let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DQIhbOW%3DD9e8oDx";
-    let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DD9lRKTMqD5dx";
+    let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2BrhDRBfI3D5pQDkjeD";
     let cli = reqwest::Client::new();
     let resp = cli.get(url).send().await?;
     let headers = resp.headers();

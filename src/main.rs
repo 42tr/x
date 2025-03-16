@@ -32,7 +32,9 @@ async fn main() -> anyhow::Result<()> {
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
     let pool = MySqlPool::connect(&database_url).await?;
-    news::obtain_latest_news(&pool).await?;
+    news::obtain_latest_news(&pool)
+        .await
+        .expect("failed to obtain latest news");
     gold::obtain(&pool).await?;
     stock::obtain(&pool).await?;
     send_email(&pool).await.unwrap();

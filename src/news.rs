@@ -1,7 +1,5 @@
-use crate::utils;
-
 use anyhow::Ok;
-use log::debug;
+use log::{debug, info};
 use sqlx::mysql::MySqlPool;
 
 pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
@@ -31,7 +29,7 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
             "Referer",
             reqwest::header::HeaderValue::from_str("https://xueqiu.com/").unwrap(),
         );
-        debug!("xueqiu request: {:?}", headers);
+        info!("xueqiu request: {:?}", headers);
         let content = cli
             .get(url.clone())
             .headers(headers.clone())
@@ -39,7 +37,7 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
             .await?
             .text()
             .await?;
-        debug!("xueqiu response: {}", content);
+        info!("xueqiu response: {}", content);
         let resp: Rsp = cli.get(url).headers(headers).send().await?.json().await?;
         if resp.items.len() == 0 || resp.items[0].id <= id {
             break;
@@ -53,6 +51,9 @@ pub async fn obtain_latest_news(pool: &MySqlPool) -> anyhow::Result<()> {
                 target: news.target.clone(),
             })
         });
+        for news in &news_list {
+            save_news(pool, news).await.expect("save news failed");
+        }
     }
     Ok(())
 }
@@ -97,7 +98,7 @@ pub struct News {
 
 async fn get_token() -> anyhow::Result<String> {
     // let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DQIhbOW%3DD9e8oDx";
-    let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DD9lRKTMqD5dx";
+    let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2BrhDRBfI3D5pQDkjeD";
     let cli = reqwest::Client::new();
     let resp = cli.get(url).send().await?;
     let headers = resp.headers();
@@ -113,7 +114,7 @@ async fn get_token() -> anyhow::Result<String> {
 
 async fn save_news(pool: &MySqlPool, news: &NewsPO) -> anyhow::Result<u64> {
     let mut query =
-        sqlx::query("insert into news(id, content, timestamp, target) values (?, ?, ?, ?)");
+        sqlx::query("insert ignore into news(id, content, timestamp, target) values (?, ?, ?, ?)");
     query = query
         .bind(&news.id)
         .bind(&news.content)

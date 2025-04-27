@@ -15,6 +15,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Create Git Tag if not exists
+        run: |
+          if [ -z "${{ github.ref }}" ]; then
+            git tag temp-$(date +%s)
+            git push origin --tags
+          fi
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:

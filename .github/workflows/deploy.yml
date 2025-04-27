@@ -62,8 +62,10 @@ jobs:
             export DATABASE_URL=${{ secrets.DATABASE_URL }}
             nohup ./x > log.txt 2>&1 &
 
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@v3.1.3
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
         with:
-          name: rust-package-distributions
-          path: target/x86_64-unknown-linux-musl/release/x
+          files: |
+            target/x86_64-unknown-linux-musl/release/x
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

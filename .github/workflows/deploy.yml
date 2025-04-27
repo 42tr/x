@@ -61,3 +61,9 @@ jobs:
             export EMAIL_AUTHORIZE_CODE=${{ secrets.EMAIL_AUTHORIZE_CODE }}
             export DATABASE_URL=${{ secrets.DATABASE_URL }}
             nohup ./x > log.txt 2>&1 &
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: rust-package-distributions
+          path: target/x86_64-unknown-linux-musl/release/x

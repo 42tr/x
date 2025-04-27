@@ -1,5 +1,7 @@
+use axum::{Extension, Router};
 use log::info;
 use sqlx::mysql::MySqlPool;
+use tokio::net::TcpListener;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod comic;
@@ -27,7 +29,7 @@ fn check_runtime_environment() {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    log4rs::init_file("log4rs.yaml", Default::default()).unwrap(); // 初始化日志
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     check_runtime_environment(); // 检查运行环境
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
@@ -75,7 +77,15 @@ async fn main() -> anyhow::Result<()> {
     info!("Main thread start !!!");
 
     // 使主线程保持阻塞直到用户手动终止（例如按 Ctrl+C）
-    tokio::signal::ctrl_c().await?;
+    // tokio::signal::ctrl_c().await?;
+    let app = Router::new()
+        // .route("/img/:id", get(api::get))
+        // .route("/img", post(api::save))
+        .layer(Extension(pool));
+
+    // run it with hyper on localhost:3000
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
     Ok(())
 }
 

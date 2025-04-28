@@ -24,9 +24,19 @@ jobs:
       - name: Install cross
         run: cargo install cross
 
+      - name: Create Cross.toml
+        run: |
+          cat <<EOF > Cross.toml
+          [target.aarch64-unknown-linux-musl.env]
+          passthrough = ["DATABASE_URL"]
+          EOF
+
+      - name: Set environment variables
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+
       - name: Build project for Raspberry Pi (ARM64)
         run: |
-          env DATABASE_URL=${{ secrets.DATABASE_URL }} cross build --target aarch64-unknown-linux-musl --release
+          cross build --target aarch64-unknown-linux-musl --release
 
       - name: Create directory on server
         uses: appleboy/ssh-action@master

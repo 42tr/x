@@ -3,7 +3,7 @@ name: Rust CI and save
 on:
   push:
     branches:
-      - main # 监听 main 分支的推送
+      - main
 
 jobs:
   build-and-deploy:
@@ -21,10 +21,15 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Build project
-        run: export DATABASE_URL=${{ secrets.DATABASE_URL }} && sudo apt-get install musl-tools && rustup target add aarch64-unknown-linux-musl && cargo build --target aarch64-unknown-linux-musl --release
+      - name: Install cross
+        run: cargo install cross
 
-      - name: Create directory
+      - name: Build project for Raspberry Pi (ARM64)
+        run: |
+          export DATABASE_URL=${{ secrets.DATABASE_URL }}
+          cross build --target aarch64-unknown-linux-musl --release --env DATABASE_URL
+
+      - name: Create directory on server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -34,10 +39,10 @@ jobs:
           script: |
             mkdir -p /home/aarch64/x/
 
-      - name: copy file via ssh password
+      - name: Copy file via scp
         uses: appleboy/scp-action@master
         with:
-          host: ${{secrets.SERVER_HOST}}
+          host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22

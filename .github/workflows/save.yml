@@ -26,8 +26,7 @@ jobs:
 
       - name: Build project for Raspberry Pi (ARM64)
         run: |
-          export DATABASE_URL=${{ secrets.DATABASE_URL }}
-          cross build --target aarch64-unknown-linux-musl --release --env DATABASE_URL
+          env DATABASE_URL=${{ secrets.DATABASE_URL }} cross build --target aarch64-unknown-linux-musl --release
 
       - name: Create directory on server
         uses: appleboy/ssh-action@master

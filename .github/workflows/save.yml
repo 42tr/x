@@ -57,3 +57,7 @@ jobs:
           port: 22
           source: "target/aarch64-unknown-linux-musl/release/x"
           target: "/home/aarch64/x/"
+
+      - name: Deploy to raspberry pi
+        run: |
+          curl ${{ secrets.N8N_SERVER }}/webhook/7c465b33-5936-41d0-ace4-d6331d060e0e

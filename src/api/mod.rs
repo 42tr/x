@@ -104,11 +104,17 @@ pub struct PageResponse<T> {
 #[folder = "frontend/pixiu/dist/"] // 静态文件目录
 struct PiXiuAssets;
 
+#[derive(RustEmbed)]
+#[folder = "frontend/pixiu-m/dist/"] // 静态文件目录
+struct MPiXiuAssets;
+
 // 路由匹配
 async fn frontend_router(uri: Uri) -> Response {
     let path = uri.path();
 
-    if path.starts_with("/pixiu") {
+    if path.starts_with("/pixium") {
+        serve_asset::<MPiXiuAssets>(path, "/pixium").unwrap_or(not_found())
+    } else if path.starts_with("/pixiu") {
         serve_asset::<PiXiuAssets>(path, "/pixiu").unwrap_or(not_found())
     } else {
         not_found()

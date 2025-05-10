@@ -26,6 +26,12 @@ jobs:
           npm install
           npm run build
 
+      - name: Build Pixium
+        run: |
+          cd frontend/pixiu-m
+          npm install
+          npm run build
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:

@@ -1,9 +1,12 @@
 use axum::{
     extract::{Json, Query, State},
-    http::{HeaderValue, Method},
+    http::{HeaderValue, Method, StatusCode, Uri},
+    response::{IntoResponse, Response},
     routing::{get, post},
     Router,
 };
+use mime_guess::from_path;
+use rust_embed::RustEmbed;
 use sqlx::MySqlPool;
 use tower_http::cors::CorsLayer;
 
@@ -30,6 +33,7 @@ pub fn app(pool: MySqlPool) -> Router {
                     Method::PUT,
                 ]),
         )
+        .fallback(get(frontend_router))
 }
 
 async fn pixiu_init(State(pool): State<MySqlPool>) -> Result<(), AppError> {
@@ -94,4 +98,44 @@ pub struct PageResponse<T> {
     sum: Vec<pixiu::SumInfo>,
     income: f32,
     expenses: f32,
+}
+
+#[derive(RustEmbed)]
+#[folder = "frontend/pixiu/dist/"] // 静态文件目录
+struct PiXiuAssets;
+
+// 路由匹配
+async fn frontend_router(uri: Uri) -> Response {
+    let path = uri.path();
+
+    if path.starts_with("/pixiu") {
+        serve_asset::<PiXiuAssets>(path, "/pixiu").unwrap_or(not_found())
+    } else {
+        not_found()
+    }
+}
+
+fn not_found() -> Response {
+    Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .body("404 Not Found".into())
+        .unwrap()
+}
+
+// 通用静态文件处理函数
+fn serve_asset<Asset: RustEmbed>(uri_path: &str, base_path: &str) -> Option<Response> {
+    let sub_path = uri_path
+        .trim_start_matches(base_path)
+        .trim_start_matches('/');
+    let file = if sub_path.is_empty() {
+        "index.html"
+    } else {
+        sub_path
+    };
+
+    Asset::get(file).map(|content| {
+        let body = content.data.into_owned();
+        let mime = from_path(file).first_or_octet_stream();
+        ([("Content-Type", mime.to_string())], body).into_response()
+    })
 }

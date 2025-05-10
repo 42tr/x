@@ -3,3 +3,5 @@
 .env
 latest_chapter.txt
 **/.DS_Store
+**/dist/
+**/node_modules/

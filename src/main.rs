@@ -1,9 +1,9 @@
-use axum::{Extension, Router};
 use log::info;
-use sqlx::mysql::MySqlPool;
+use sqlx::MySqlPool;
 use tokio::net::TcpListener;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
+mod api;
 mod comic;
 mod email;
 mod gold;
@@ -33,13 +33,14 @@ async fn main() -> anyhow::Result<()> {
     check_runtime_environment(); // 检查运行环境
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
-    let pool = MySqlPool::connect(&database_url).await?;
+    let pool: MySqlPool = MySqlPool::connect(&database_url).await?;
     news::obtain_latest_news(&pool)
         .await
         .expect("failed to obtain latest news");
     gold::obtain(&pool).await?;
     stock::obtain(&pool).await?;
-    send_email(&pool).await.unwrap();
+    // send_email(&pool).await.unwrap();
+    utils::send_message("启动成功").await?;
 
     let sched = JobScheduler::new().await?;
     let pool1 = pool.clone();
@@ -78,11 +79,8 @@ async fn main() -> anyhow::Result<()> {
 
     // 使主线程保持阻塞直到用户手动终止（例如按 Ctrl+C）
     // tokio::signal::ctrl_c().await?;
-    let app = Router::new()
-        // .route("/img/:id", get(api::get))
-        // .route("/img", post(api::save))
-        .layer(Extension(pool));
 
+    let app = api::app(pool.clone());
     // run it with hyper on localhost:3000
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();

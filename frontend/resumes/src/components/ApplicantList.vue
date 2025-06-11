@@ -3,11 +3,11 @@ import { ref } from 'vue';
 import ApplicantScore from './ApplicantScore.vue';
 import type { Applicant } from '../types/applicant';
 
-// Sample data - in a real app this would come from an API or props
+// 示例数据 - 在真实应用中，这些数据会从API或props获取
 const applicants = ref<Applicant[]>([
   {
     id: 1,
-    name: 'Jane Doe',
+    name: '张小明',
     scores: {
       experience: 8,
       education: 9,
@@ -18,7 +18,7 @@ const applicants = ref<Applicant[]>([
   },
   {
     id: 2,
-    name: 'John Smith',
+    name: '李华',
     scores: {
       experience: 7,
       education: 6,
@@ -29,7 +29,7 @@ const applicants = ref<Applicant[]>([
   },
   {
     id: 3,
-    name: 'Alex Johnson',
+    name: '王芳',
     scores: {
       experience: 9,
       education: 7,
@@ -40,31 +40,31 @@ const applicants = ref<Applicant[]>([
   }
 ]);
 
-// Add a method to sort applicants by average score
+// 添加方法按平均分数排序应聘者
 const sortByScore = () => {
   applicants.value.sort((a, b) => {
     const aScore = Object.values(a.scores).reduce((sum, score) => sum + score, 0) / 5;
     const bScore = Object.values(b.scores).reduce((sum, score) => sum + score, 0) / 5;
-    return bScore - aScore; // Sort in descending order
+    return bScore - aScore; // 降序排列
   });
 };
 
-// Sort on component mount
+// 组件加载时排序
 sortByScore();
 </script>
 
 <template>
   <div class="applicant-list">
-    <h1>Applicant Assessments</h1>
+    <h1>应聘者评估</h1>
     
     <div class="controls">
       <button @click="sortByScore" class="sort-button">
-        Sort by Score
+        按分数排序
       </button>
     </div>
     
     <div v-if="applicants.length === 0" class="empty-state">
-      No applicants found
+      未找到应聘者
     </div>
     
     <div v-else class="applicants">

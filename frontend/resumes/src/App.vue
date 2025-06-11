@@ -7,7 +7,7 @@ import ApplicantList from './components/ApplicantList.vue'
     <a href="https://vuejs.org/" target="_blank">
       <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
-    <h1>Resume Assessment Tool</h1>
+    <h1>简历评估工具</h1>
   </div>
   <main>
     <ApplicantList />

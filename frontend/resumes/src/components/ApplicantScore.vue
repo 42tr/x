@@ -10,17 +10,17 @@ interface ScoreProps {
 
 const props = defineProps<ScoreProps>();
 
-// Calculate average score
+// 计算平均分数
 const averageScore = computed(() => {
   return calculateScore(props.applicant);
 });
 
-// Determine final grade based on average score
+// 根据平均分数确定最终等级
 const finalGrade = computed(() => {
   return calculateGrade(averageScore.value);
 });
 
-// Get color based on score
+// 根据分数获取颜色
 const getScoreColor = (score: number) => {
   if (score >= 8) return 'excellent';
   if (score >= 6) return 'good';
@@ -28,7 +28,7 @@ const getScoreColor = (score: number) => {
   return 'poor';
 };
 
-// Get color for grade
+// 获取等级颜色
 const gradeColor = computed(() => {
   const average = averageScore.value;
   return getScoreColor(average);
@@ -37,40 +37,40 @@ const gradeColor = computed(() => {
 
 <template>
   <div class="applicant-score">
-    <h2>{{ applicant.name }}'s Assessment</h2>
+    <h2>{{ applicant.name }} 的评估</h2>
     
     <div class="score-card">
       <div class="score-items">
         <div class="score-item">
-          <span class="label">Experience:</span>
+          <span class="label">工作经验：</span>
           <span class="score" :class="getScoreColor(applicant.scores.experience)">
             {{ applicant.scores.experience }}
           </span>
         </div>
         
         <div class="score-item">
-          <span class="label">Education:</span>
+          <span class="label">教育背景：</span>
           <span class="score" :class="getScoreColor(applicant.scores.education)">
             {{ applicant.scores.education }}
           </span>
         </div>
         
         <div class="score-item">
-          <span class="label">Interview:</span>
+          <span class="label">面试表现：</span>
           <span class="score" :class="getScoreColor(applicant.scores.interview)">
             {{ applicant.scores.interview }}
           </span>
         </div>
         
         <div class="score-item">
-          <span class="label">Technical:</span>
+          <span class="label">技术能力：</span>
           <span class="score" :class="getScoreColor(applicant.scores.technical)">
             {{ applicant.scores.technical }}
           </span>
         </div>
         
         <div class="score-item">
-          <span class="label">Cultural Fit:</span>
+          <span class="label">文化契合度：</span>
           <span class="score" :class="getScoreColor(applicant.scores.cultural)">
             {{ applicant.scores.cultural }}
           </span>
@@ -78,12 +78,12 @@ const gradeColor = computed(() => {
       </div>
       
       <div class="average-score">
-        <div class="average-label">Average Score:</div>
+        <div class="average-label">平均分数：</div>
         <div class="average-value" :class="gradeColor">{{ averageScore.toFixed(1) }}</div>
       </div>
       
       <div class="final-grade">
-        <div class="grade-label">Final Grade:</div>
+        <div class="grade-label">最终等级：</div>
         <div class="grade-value" :class="gradeColor">{{ finalGrade }}</div>
       </div>
       
@@ -166,7 +166,7 @@ h2 {
   border-radius: 4px;
 }
 
-/* Score coloring */
+/* 分数颜色 */
 .excellent {
   background-color: #4caf50;
   color: white;

@@ -9,18 +9,18 @@ interface ChartProps {
 const props = defineProps<ChartProps>();
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 
-// Draw the radar chart
+// 绘制雷达图
 const drawChart = () => {
   if (!chartCanvas.value) return;
   
   const ctx = chartCanvas.value.getContext('2d');
   if (!ctx) return;
   
-  // Clear previous drawing
+  // 清除之前的绘图
   ctx.clearRect(0, 0, chartCanvas.value.width, chartCanvas.value.height);
   
   const scores = props.applicant.scores;
-  const labels = ['Experience', 'Education', 'Interview', 'Technical', 'Cultural'];
+  const labels = ['工作经验', '教育背景', '面试表现', '技术能力', '文化契合度'];
   const values = [scores.experience, scores.education, scores.interview, scores.technical, scores.cultural];
   
   // Chart configuration
@@ -29,7 +29,7 @@ const drawChart = () => {
   const radius = Math.min(centerX, centerY) - 20;
   const angleStep = (Math.PI * 2) / labels.length;
   
-  // Draw background (circular grid)
+  // 绘制背景（圆形网格）
   for (let level = 1; level <= 10; level++) {
     const currentRadius = (radius / 10) * level;
     
@@ -45,9 +45,9 @@ const drawChart = () => {
     }
   }
   
-  // Draw axis lines
+  // 绘制轴线
   for (let i = 0; i < labels.length; i++) {
-    const angle = i * angleStep - Math.PI / 2; // Start from top (subtract 90 degrees)
+    const angle = i * angleStep - Math.PI / 2; // 从顶部开始（减去90度）
     const axisX = centerX + radius * Math.cos(angle);
     const axisY = centerY + radius * Math.sin(angle);
     
@@ -57,7 +57,7 @@ const drawChart = () => {
     ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
     ctx.stroke();
     
-    // Draw labels
+    // 绘制标签
     const labelX = centerX + (radius + 20) * Math.cos(angle);
     const labelY = centerY + (radius + 20) * Math.sin(angle);
     
@@ -68,11 +68,11 @@ const drawChart = () => {
     ctx.fillText(labels[i], labelX, labelY);
   }
   
-  // Draw data points and connect them
+  // 绘制数据点并连接它们
   ctx.beginPath();
   for (let i = 0; i < values.length; i++) {
     const value = values[i];
-    const angle = i * angleStep - Math.PI / 2; // Start from top
+    const angle = i * angleStep - Math.PI / 2; // 从顶部开始
     const pointRadius = (radius / 10) * value;
     const pointX = centerX + pointRadius * Math.cos(angle);
     const pointY = centerY + pointRadius * Math.sin(angle);
@@ -84,23 +84,23 @@ const drawChart = () => {
     }
   }
   
-  // Close the path back to the first point
-  const firstAngle = -Math.PI / 2; // Start from top
+  // 闭合路径回到第一个点
+  const firstAngle = -Math.PI / 2; // 从顶部开始
   const firstPointRadius = (radius / 10) * values[0];
   const firstPointX = centerX + firstPointRadius * Math.cos(firstAngle);
   const firstPointY = centerY + firstPointRadius * Math.sin(firstAngle);
   ctx.lineTo(firstPointX, firstPointY);
   
-  // Fill with semi-transparent color
-  ctx.fillStyle = 'rgba(66, 184, 131, 0.5)'; // Vue green with opacity
+  // 填充半透明颜色
+  ctx.fillStyle = 'rgba(66, 184, 131, 0.5)'; // Vue绿色带透明度
   ctx.fill();
   
-  // Stroke the outline
+  // 描边轮廓
   ctx.strokeStyle = 'rgba(66, 184, 131, 0.8)';
   ctx.lineWidth = 2;
   ctx.stroke();
   
-  // Draw points at each vertex
+  // 在每个顶点绘制点
   for (let i = 0; i < values.length; i++) {
     const value = values[i];
     const angle = i * angleStep - Math.PI / 2;
@@ -110,13 +110,13 @@ const drawChart = () => {
     
     ctx.beginPath();
     ctx.arc(pointX, pointY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#42b883'; // Vue green
+    ctx.fillStyle = '#42b883'; // Vue绿色
     ctx.fill();
-    ctx.strokeStyle = '#35495e'; // Vue dark blue
+    ctx.strokeStyle = '#35495e'; // Vue深蓝色
     ctx.lineWidth = 1.5;
     ctx.stroke();
     
-    // Add score text
+    // 添加分数文本
     ctx.font = 'bold 12px Arial';
     ctx.fillStyle = '#333';
     ctx.textAlign = 'center';
@@ -127,20 +127,20 @@ const drawChart = () => {
   }
 };
 
-// Watch for changes in applicant data
+// 监听应聘者数据变化
 watch(() => props.applicant, drawChart, { deep: true });
 
-// Initialize chart on component mount
+// 在组件挂载时初始化图表
 onMounted(() => {
   if (chartCanvas.value) {
-    // Set canvas dimensions based on container size
+    // 根据容器大小设置画布尺寸
     chartCanvas.value.width = chartCanvas.value.parentElement?.clientWidth || 300;
     chartCanvas.value.height = 300;
     
-    // Draw the initial chart
+    // 绘制初始图表
     drawChart();
     
-    // Handle window resize
+    // 处理窗口大小调整
     const handleResize = () => {
       if (chartCanvas.value) {
         chartCanvas.value.width = chartCanvas.value.parentElement?.clientWidth || 300;
@@ -151,7 +151,7 @@ onMounted(() => {
     
     window.addEventListener('resize', handleResize);
     
-    // Clean up event listener on unmount
+    // 在组件卸载时清理事件监听器
     return () => {
       window.removeEventListener('resize', handleResize);
     };
@@ -161,7 +161,7 @@ onMounted(() => {
 
 <template>
   <div class="chart-container">
-    <h3>Skills Radar Chart</h3>
+    <h3>能力雷达图</h3>
     <div class="canvas-wrapper">
       <canvas ref="chartCanvas"></canvas>
     </div>

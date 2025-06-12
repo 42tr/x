@@ -1,38 +1,38 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { calculateGrade, calculateScore } from '../types/applicant';
-import type { Applicant } from '../types/applicant';
-import ScoreChart from './ScoreChart.vue';
+import { computed } from 'vue'
+import { calculateGrade, calculateScore } from '../types/applicant'
+import type { Applicant } from '../types/applicant'
+import ScoreChart from './ScoreChart.vue'
 
 interface ScoreProps {
-  applicant: Applicant;
+  applicant: Applicant
 }
 
-const props = defineProps<ScoreProps>();
+const props = defineProps<ScoreProps>()
 
 // 计算平均分数
 const averageScore = computed(() => {
-  return calculateScore(props.applicant);
-});
+  return calculateScore(props.applicant)
+})
 
 // 根据平均分数确定最终等级
 const finalGrade = computed(() => {
-  return calculateGrade(averageScore.value);
-});
+  return calculateGrade(averageScore.value)
+})
 
 // 根据分数获取颜色
 const getScoreColor = (score: number) => {
-  if (score >= 8) return 'excellent';
-  if (score >= 6) return 'good';
-  if (score >= 4) return 'average';
-  return 'poor';
-};
+  if (score >= 8) return 'excellent'
+  if (score >= 6) return 'good'
+  if (score >= 4) return 'average'
+  return 'poor'
+}
 
 // 获取等级颜色
 const gradeColor = computed(() => {
-  const average = averageScore.value;
-  return getScoreColor(average);
-});
+  const average = averageScore.value
+  return getScoreColor(average)
+})
 </script>
 
 <template>
@@ -43,50 +43,13 @@ const gradeColor = computed(() => {
           <div class="average-label">平均分数：</div>
           <div class="average-value" :class="gradeColor">{{ averageScore.toFixed(1) }}</div>
         </div>
-        
+
         <div class="final-grade">
           <div class="grade-label">最终等级：</div>
           <div class="grade-value" :class="gradeColor">{{ finalGrade }}</div>
         </div>
       </div>
-      
-      <div class="score-items">
-        <div class="score-item">
-          <span class="label">工作经验：</span>
-          <span class="score" :class="getScoreColor(applicant.scores.experience)">
-            {{ applicant.scores.experience }}
-          </span>
-        </div>
-        
-        <div class="score-item">
-          <span class="label">教育背景：</span>
-          <span class="score" :class="getScoreColor(applicant.scores.education)">
-            {{ applicant.scores.education }}
-          </span>
-        </div>
-        
-        <div class="score-item">
-          <span class="label">面试表现：</span>
-          <span class="score" :class="getScoreColor(applicant.scores.interview)">
-            {{ applicant.scores.interview }}
-          </span>
-        </div>
-        
-        <div class="score-item">
-          <span class="label">技术能力：</span>
-          <span class="score" :class="getScoreColor(applicant.scores.technical)">
-            {{ applicant.scores.technical }}
-          </span>
-        </div>
-        
-        <div class="score-item">
-          <span class="label">文化契合度：</span>
-          <span class="score" :class="getScoreColor(applicant.scores.cultural)">
-            {{ applicant.scores.cultural }}
-          </span>
-        </div>
-      </div>
-      
+
       <ScoreChart :applicant="applicant" />
     </div>
   </div>
@@ -145,7 +108,8 @@ const gradeColor = computed(() => {
   text-align: center;
 }
 
-.average-score, .final-grade {
+.average-score,
+.final-grade {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -155,12 +119,14 @@ const gradeColor = computed(() => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.average-label, .grade-label {
+.average-label,
+.grade-label {
   font-weight: 600;
   font-size: 1.1rem;
 }
 
-.average-value, .grade-value {
+.average-value,
+.grade-value {
   font-weight: bold;
   font-size: 1.5rem;
   padding: 0.25rem 0.75rem;
@@ -195,12 +161,14 @@ const gradeColor = computed(() => {
     background-color: #2a2a2a;
     color: #f0f0f0;
   }
-  
+
   .score-items {
     background-color: rgba(255, 255, 255, 0.05);
   }
-  
-  .score-item, .average-score, .final-grade {
+
+  .score-item,
+  .average-score,
+  .final-grade {
     background-color: #333;
     color: #f0f0f0;
   }

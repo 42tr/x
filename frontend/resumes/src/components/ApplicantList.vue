@@ -157,8 +157,6 @@ sortByScore();
 
 <template>
   <div class="applicant-list">
-    <h1>应聘者评估</h1>
-    
     <div class="controls">
       <div class="search-container">
         <input 
@@ -209,11 +207,7 @@ sortByScore();
   padding: 1rem;
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #2c3e50;
-}
+
 
 .controls {
   display: flex;
@@ -374,10 +368,6 @@ body.popup-open {
 }
 
 @media (prefers-color-scheme: dark) {
-  h1 {
-    color: #e9ecef;
-  }
-  
   .empty-state {
     background-color: #2a2a2a;
     color: #adb5bd;

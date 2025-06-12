@@ -19,6 +19,9 @@
   --background-dark: #242424;
   --text-light: #213547;
   --text-dark: rgba(255, 255, 255, 0.87);
+  --z-index-popup: 100;
+  --z-index-backdrop: 9998;
+  --z-index-modal: 9999;
 }
 
 a {
@@ -104,8 +107,50 @@ button:focus-visible {
   margin-bottom: 1.5rem;
 }
 
+/* Popup styles */
+.popup {
+  position: relative;
+  z-index: var(--z-index-popup);
+}
+
+/* 弹窗打开时固定背景 */
+body.popup-open {
+  overflow: hidden;
+  padding-right: 15px; /* 防止滚动条消失导致的页面抖动 */
+}
+
+/* 弹窗和遮罩层样式 */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-index-backdrop);
+}
+
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--z-index-modal);
+  max-height: 90vh;
+  max-width: 90vw;
+  overflow: auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
 @media (prefers-color-scheme: dark) {
   .card {
     background-color: #333;
+  }
+  
+  .modal-content {
+    background-color: #2a2a2a;
+    color: var(--text-dark);
   }
 }

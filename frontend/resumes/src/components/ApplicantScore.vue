@@ -37,9 +37,19 @@ const gradeColor = computed(() => {
 
 <template>
   <div class="applicant-score">
-    <h2>{{ applicant.name }} 的评估</h2>
-    
     <div class="score-card">
+      <div class="summary-row">
+        <div class="average-score">
+          <div class="average-label">平均分数：</div>
+          <div class="average-value" :class="gradeColor">{{ averageScore.toFixed(1) }}</div>
+        </div>
+        
+        <div class="final-grade">
+          <div class="grade-label">最终等级：</div>
+          <div class="grade-value" :class="gradeColor">{{ finalGrade }}</div>
+        </div>
+      </div>
+      
       <div class="score-items">
         <div class="score-item">
           <span class="label">工作经验：</span>
@@ -77,16 +87,6 @@ const gradeColor = computed(() => {
         </div>
       </div>
       
-      <div class="average-score">
-        <div class="average-label">平均分数：</div>
-        <div class="average-value" :class="gradeColor">{{ averageScore.toFixed(1) }}</div>
-      </div>
-      
-      <div class="final-grade">
-        <div class="grade-label">最终等级：</div>
-        <div class="grade-value" :class="gradeColor">{{ finalGrade }}</div>
-      </div>
-      
       <ScoreChart :applicant="applicant" />
     </div>
   </div>
@@ -94,34 +94,34 @@ const gradeColor = computed(() => {
 
 <style scoped>
 .applicant-score {
-  margin: 2rem 0;
-  border-radius: 8px;
-  overflow: hidden;
   background-color: #f8f9fa;
   color: #333;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-h2 {
-  background-color: #2c3e50;
-  color: white;
-  margin: 0;
-  padding: 1rem;
-  font-size: 1.5rem;
+  width: 100%;
 }
 
 .score-card {
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
+.summary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
 .score-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .score-item {
@@ -141,16 +141,17 @@ h2 {
   font-weight: bold;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+  min-width: 2rem;
+  text-align: center;
 }
 
 .average-score, .final-grade {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1rem;
   padding: 1rem;
   background-color: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -164,6 +165,8 @@ h2 {
   font-size: 1.5rem;
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
+  min-width: 3rem;
+  text-align: center;
 }
 
 /* 分数颜色 */
@@ -193,9 +196,19 @@ h2 {
     color: #f0f0f0;
   }
   
+  .score-items {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
   .score-item, .average-score, .final-grade {
     background-color: #333;
     color: #f0f0f0;
+  }
+}
+
+@media (max-width: 600px) {
+  .summary-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

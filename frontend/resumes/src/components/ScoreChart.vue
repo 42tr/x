@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
 import type { Applicant } from '../types/applicant';
 
 interface ChartProps {
@@ -8,6 +8,10 @@ interface ChartProps {
 
 const props = defineProps<ChartProps>();
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
+const resizeObserver = ref<ResizeObserver | null>(null);
+
+// 为图例创建评分字段映射类型
+type ScoreField = keyof Applicant['scores'];
 
 // 绘制雷达图
 const drawChart = () => {
@@ -23,10 +27,23 @@ const drawChart = () => {
   const labels = ['工作经验', '教育背景', '面试表现', '技术能力', '文化契合度'];
   const values = [scores.experience, scores.education, scores.interview, scores.technical, scores.cultural];
   
+  // 处理高分辨率屏幕
+  const dpr = window.devicePixelRatio || 1;
+  const rect = chartCanvas.value.getBoundingClientRect();
+  
+  // 设置画布尺寸并考虑设备像素比
+  chartCanvas.value.width = rect.width * dpr;
+  chartCanvas.value.height = rect.height * dpr;
+  chartCanvas.value.style.width = `${rect.width}px`;
+  chartCanvas.value.style.height = `${rect.height}px`;
+  
+  // 缩放绘图上下文以匹配设备像素比
+  ctx.scale(dpr, dpr);
+  
   // Chart configuration
-  const centerX = chartCanvas.value.width / 2;
-  const centerY = chartCanvas.value.height / 2;
-  const radius = Math.min(centerX, centerY) - 20;
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+  const radius = Math.min(centerX, centerY) - 30;
   const angleStep = (Math.PI * 2) / labels.length;
   
   // 绘制背景（圆形网格）
@@ -130,40 +147,59 @@ const drawChart = () => {
 // 监听应聘者数据变化
 watch(() => props.applicant, drawChart, { deep: true });
 
+// 处理图表的响应式更新
+const setupResizeObserver = () => {
+  if (chartCanvas.value && 'ResizeObserver' in window) {
+    resizeObserver.value = new ResizeObserver(() => {
+      requestAnimationFrame(drawChart);
+    });
+    resizeObserver.value.observe(chartCanvas.value);
+  }
+};
+
 // 在组件挂载时初始化图表
 onMounted(() => {
   if (chartCanvas.value) {
-    // 根据容器大小设置画布尺寸
-    chartCanvas.value.width = chartCanvas.value.parentElement?.clientWidth || 300;
-    chartCanvas.value.height = 300;
+    // 设置ResizeObserver以监听容器大小变化
+    setupResizeObserver();
     
-    // 绘制初始图表
-    drawChart();
+    // 初始绘制
+    setTimeout(drawChart, 100); // 短暂延迟确保容器已完全渲染
     
-    // 处理窗口大小调整
-    const handleResize = () => {
-      if (chartCanvas.value) {
-        chartCanvas.value.width = chartCanvas.value.parentElement?.clientWidth || 300;
-        chartCanvas.value.height = 300;
-        drawChart();
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // 在组件卸载时清理事件监听器
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    // 备用方案：窗口大小变化时重绘
+    window.addEventListener('resize', drawChart);
   }
+});
+
+// 在组件卸载前清理资源
+onBeforeUnmount(() => {
+  // 清理ResizeObserver
+  if (resizeObserver.value) {
+    resizeObserver.value.disconnect();
+  }
+  // 移除事件监听器
+  window.removeEventListener('resize', drawChart);
 });
 </script>
 
 <template>
   <div class="chart-container">
-    <h3>能力雷达图</h3>
+    <h3>专业能力分析</h3>
     <div class="canvas-wrapper">
       <canvas ref="chartCanvas"></canvas>
+    </div>
+    
+    <div class="score-legend">
+      <div class="legend-item" v-for="(key, index) in [
+        { name: '工作经验', field: 'experience' as ScoreField },
+        { name: '教育背景', field: 'education' as ScoreField },
+        { name: '面试表现', field: 'interview' as ScoreField },
+        { name: '技术能力', field: 'technical' as ScoreField },
+        { name: '文化契合度', field: 'cultural' as ScoreField }
+      ]" :key="index">
+        <div class="legend-color"></div>
+        <div class="legend-label">{{ key.name }}: <strong>{{ applicant.scores[key.field] }}</strong></div>
+      </div>
     </div>
   </div>
 </template>
@@ -174,24 +210,56 @@ onMounted(() => {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 h3 {
   text-align: center;
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .canvas-wrapper {
   width: 100%;
   display: flex;
   justify-content: center;
+  height: 280px;
 }
 
 canvas {
   max-width: 100%;
+  height: 100%;
+}
+
+.score-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-color {
+  width: 10px;
+  height: 10px;
+  background-color: #42b883;
+  border-radius: 50%;
+}
+
+.legend-label {
+  font-size: 0.85rem;
+  color: #555;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -201,6 +269,32 @@ canvas {
   
   h3 {
     color: #e9ecef;
+  }
+  
+  .legend-label {
+    color: #ddd;
+  }
+  
+  .score-legend {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 768px) {
+  .canvas-wrapper {
+    height: 250px;
+  }
+  
+  .score-legend {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 1rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .score-legend {
+    justify-content: space-around;
   }
 }
 </style>

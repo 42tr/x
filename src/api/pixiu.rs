@@ -82,7 +82,7 @@ pub async fn get_fund_info(
 ) -> anyhow::Result<Vec<FundInfo>> {
     let offset = (page - 1) * size;
     let sql = format!(
-        "SELECT * FROM pixiu_fund_info WHERE timestamp BETWEEN {} AND {} order by timestamp desc limit {} offset {}",
+        "SELECT * FROM pixiu_fund_info WHERE timestamp BETWEEN {} AND {} order by timestamp desc, id limit {} offset {}",
         from, to, size, offset
     );
     let rows = sqlx::query_as(&sql).fetch_all(pool).await?;

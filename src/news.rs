@@ -98,7 +98,7 @@ pub struct News {
 
 async fn get_token() -> anyhow::Result<String> {
     // let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2Br%3DQIhbOW%3DD9e8oDx";
-    let url = "https://xueqiu.com/?md5__1038=QqGxcDnDyiitnD05o4%2BrhDRBfI3D5pQDkjeE";
+    let url = "https://xueqiu.com/?md5__1038=2840ce7d37-dKD0h0R0MrS5EX0a%3DUyOUT8r5yWrFgU20XsucumOUusdUiejsFQhQQe20n0K5buB05A2uagzQul0535u6BzuguasiMurWjuH3c3iPqlUXtD0uZu1uvzuIuy4uHBvsiNluyZuRsataiDuSq3uPYQnX%3DfTPDUEju6bXS6zrUdsuI3lPSdujsFbau";
     let cli = reqwest::Client::new();
     let resp = cli.get(url).send().await?;
     let headers = resp.headers();

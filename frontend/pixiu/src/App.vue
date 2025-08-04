@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import Property from './components/Property.vue'
 import Table from './components/Table.vue'
 import EchartPie from './components/EchartPie.vue'
@@ -10,8 +10,7 @@ import {
   NLayoutFooter,
   NDatePicker,
   NGradientText,
-  NNumberAnimation,
-  NSelect
+  NNumberAnimation
 } from 'naive-ui'
 import { getFundList, getDebtList, getPropertyList, getFundSources, getFundTypes } from './api/api'
 import type { Fund } from './types/fund'
@@ -30,7 +29,7 @@ const propertyData = ref<PropertyInfo[]>([])
 const totalIncome = ref<number>(0)
 const totalExpense = ref<number>(0)
 const source = ref<string>('')
-const type = ref<string>('')
+const type = ref<string[]>([])
 const sources = ref<string[]>([])
 const types = ref<string[]>([])
 const spendPieData = ref<
@@ -39,6 +38,10 @@ const spendPieData = ref<
     value: number
   }[]
 >([])
+
+watch([source, type], () => {
+  changeDate()
+})
 
 onMounted(async () => {
   await refresh()
@@ -81,7 +84,7 @@ async function getFundInfo() {
     page.value,
     10,
     source.value,
-    type.value
+    type.value.join(',')
   )
   page_count.value = Math.ceil(resp.total / 10)
   let fundList = resp.data.map((item) => {
@@ -112,24 +115,6 @@ async function getFundInfo() {
                 style="width: 300px"
                 :on-change="changeDate"
               />
-              <n-select
-                v-model:value="source"
-                :options="sources.map((item) => ({ label: item, value: item }))"
-                placeholder="选择来源"
-                clearable
-                size="small"
-                style="width: 200px"
-                :on-change="changeDate"
-              />
-              <n-select
-                v-model:value="type"
-                :options="types.map((item) => ({ label: item, value: item }))"
-                placeholder="选择类型"
-                clearable
-                size="small"
-                style="width: 200px"
-                :on-change="changeDate"
-              />
               <n-gradient-text type="error" style="margin-left: 20px; width: 100px">
                 收入：
                 <n-number-animation
@@ -152,7 +137,7 @@ async function getFundInfo() {
               </n-gradient-text>
             </div>
             <br />
-            <Table :data="data" />
+            <Table :data="data" v-model:source="source" v-model:type="type" :sources="sources" :types="types" />
             <n-pagination
               v-model:page="page"
               v-model:page-count="page_count"

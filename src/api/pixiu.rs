@@ -88,10 +88,15 @@ pub async fn get_fund_info(
         from, to
     );
     if let Some(source) = source {
-        sql.push_str(&format!(" AND source = '{}'", source));
+        if !source.is_empty() {
+            sql.push_str(&format!(" AND source = '{}'", source));
+        }
     }
     if let Some(fund_type) = fund_type {
-        sql.push_str(&format!(" AND class = '{}'", fund_type));
+        if !fund_type.is_empty() {
+            let types: Vec<String> = fund_type.split(',').map(|s| format!("'{}'", s)).collect();
+            sql.push_str(&format!(" AND class IN ({})", types.join(",")));
+        }
     }
     sql.push_str(&format!(" order by timestamp desc, id limit {} offset {}", size, offset));
 
@@ -113,10 +118,15 @@ pub async fn get_sum_info(
         from, to
     );
     if let Some(source) = source {
-        sql.push_str(&format!(" AND source = '{}'", source));
+        if !source.is_empty() {
+            sql.push_str(&format!(" AND source = '{}'", source));
+        }
     }
     if let Some(fund_type) = fund_type {
-        sql.push_str(&format!(" AND class = '{}'", fund_type));
+        if !fund_type.is_empty() {
+            let types: Vec<String> = fund_type.split(',').map(|s| format!("'{}'", s)).collect();
+            sql.push_str(&format!(" AND class IN ({})", types.join(",")));
+        }
     }
     sql.push_str(" group by class having value > 0");
     let rows = sqlx::query_as(&sql).fetch_all(pool).await?;
@@ -138,10 +148,15 @@ pub async fn get_income_info(
         from, to
     );
     if let Some(source) = source {
-        sql.push_str(&format!(" AND source = '{}'", source));
+        if !source.is_empty() {
+            sql.push_str(&format!(" AND source = '{}'", source));
+        }
     }
     if let Some(fund_type) = fund_type {
-        sql.push_str(&format!(" AND class = '{}'", fund_type));
+        if !fund_type.is_empty() {
+            let types: Vec<String> = fund_type.split(',').map(|s| format!("'{}'", s)).collect();
+            sql.push_str(&format!(" AND class IN ({})", types.join(",")));
+        }
     }
     let result: Option<f32> = sqlx::query_scalar(&sql).fetch_optional(pool).await?;
     Ok(result.unwrap_or(0.0))
@@ -162,10 +177,15 @@ pub async fn get_expense_info(
         from, to
     );
     if let Some(source) = source {
-        sql.push_str(&format!(" AND source = '{}'", source));
+        if !source.is_empty() {
+            sql.push_str(&format!(" AND source = '{}'", source));
+        }
     }
     if let Some(fund_type) = fund_type {
-        sql.push_str(&format!(" AND class = '{}'", fund_type));
+        if !fund_type.is_empty() {
+            let types: Vec<String> = fund_type.split(',').map(|s| format!("'{}'", s)).collect();
+            sql.push_str(&format!(" AND class IN ({})", types.join(",")));
+        }
     }
     let result: Option<f32> = sqlx::query_scalar(&sql).fetch_optional(pool).await?;
     Ok(result.unwrap_or(0.0))
@@ -183,10 +203,15 @@ pub async fn count(
         from, to
     );
     if let Some(source) = source {
-        sql.push_str(&format!(" AND source = '{}'", source));
+        if !source.is_empty() {
+            sql.push_str(&format!(" AND source = '{}'", source));
+        }
     }
     if let Some(fund_type) = fund_type {
-        sql.push_str(&format!(" AND class = '{}'", fund_type));
+        if !fund_type.is_empty() {
+            let types: Vec<String> = fund_type.split(',').map(|s| format!("'{}'", s)).collect();
+            sql.push_str(&format!(" AND class IN ({})", types.join(",")));
+        }
     }
     let count: i32 = sqlx::query_scalar(&sql).fetch_one(pool).await?;
     Ok(count)

@@ -4,7 +4,7 @@
 
 <script lang="ts" setup>
 import type { DataTableColumns } from 'naive-ui'
-import { NGradientText } from 'naive-ui'
+import { NGradientText, NSelect } from 'naive-ui'
 import { h } from 'vue'
 import type { PropType } from 'vue'
 
@@ -16,8 +16,13 @@ interface Song {
   source: string
 }
 const props = defineProps({
-  data: { type: Array as PropType<Song[]>, required: true }
+  data: { type: Array as PropType<Song[]>, required: true },
+  sources: { type: Array as PropType<string[]>, required: true },
+  types: { type: Array as PropType<string[]>, required: true }
 })
+
+const source = defineModel('source')
+const type = defineModel('type')
 
 type GradientType = 'info' | 'success' | 'warning' | 'error' | 'primary' | 'danger'
 function colorTitle(title: string, type: GradientType = 'info') {
@@ -47,7 +52,18 @@ const tableColumns: DataTableColumns<Song> = [
   {
     key: 'class',
     title() {
-      return colorTitle('类型', 'info')
+      return h(
+        NSelect,
+        {
+          options: props.types.map((item) => ({ label: item, value: item })),
+          value: type.value as string,
+          'onUpdate:value': (v) => (type.value = v),
+          placeholder: '选择类型',
+          clearable: true,
+          multiple: true
+        },
+        { default: () => colorTitle('类型', 'info') }
+      )
     }
   },
   {
@@ -59,7 +75,17 @@ const tableColumns: DataTableColumns<Song> = [
   {
     key: 'source',
     title() {
-      return colorTitle('来源', 'error')
+      return h(
+        NSelect,
+        {
+          options: props.sources.map((item) => ({ label: item, value: item })),
+          value: source.value as string,
+          'onUpdate:value': (v) => (source.value = v),
+          placeholder: '选择来源',
+          clearable: true
+        },
+        { default: () => colorTitle('来源', 'error') }
+      )
     }
   }
 ]

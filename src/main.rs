@@ -34,46 +34,46 @@ async fn main() -> anyhow::Result<()> {
 
     let database_url = std::env::var("DATABASE_URL").unwrap();
     let pool: MySqlPool = MySqlPool::connect(&database_url).await?;
-    news::obtain_latest_news(&pool)
-        .await
-        .expect("failed to obtain latest news");
-    gold::obtain(&pool).await?;
-    stock::obtain(&pool).await?;
+    // news::obtain_latest_news(&pool)
+    //     .await
+    //     .expect("failed to obtain latest news");
+    // gold::obtain(&pool).await?;
+    // stock::obtain(&pool).await?;
     // send_email(&pool).await.unwrap();
     utils::send_message("启动成功").await?;
 
-    let sched = JobScheduler::new().await?;
-    let pool1 = pool.clone();
-    let pool2 = pool.clone();
-    sched
-        .add(Job::new_async("0 * * * * *", move |_uuid, mut _l| {
-            let pool = pool1.clone();
-            Box::pin(async move {
-                info!(
-                    "Start Obtain news !!! Current time: {}",
-                    utils::currenttime()
-                );
-                news::obtain_latest_news(&pool).await.unwrap();
-            })
-        })?)
-        .await?;
-    sched
-        .add(Job::new_async("0 0 0 * * *", move |_uuid, mut _l| {
-            let pool = pool2.clone();
-            Box::pin(async move {
-                info!(
-                    "Start schedule !!! Current time: {:?}",
-                    std::time::SystemTime::now()
-                );
-                gold::obtain(&pool).await.expect("obtain gold info failed!");
-                stock::obtain(&pool)
-                    .await
-                    .expect("obtain stock info failed!");
-                send_email(&pool).await.expect("send email failed!");
-            })
-        })?)
-        .await?;
-    sched.start().await?;
+    // let sched = JobScheduler::new().await?;
+    // let pool1 = pool.clone();
+    // let pool2 = pool.clone();
+    // sched
+    //     .add(Job::new_async("0 * * * * *", move |_uuid, mut _l| {
+    //         let pool = pool1.clone();
+    //         Box::pin(async move {
+    //             info!(
+    //                 "Start Obtain news !!! Current time: {}",
+    //                 utils::currenttime()
+    //             );
+    //             news::obtain_latest_news(&pool).await.unwrap();
+    //         })
+    //     })?)
+    //     .await?;
+    // sched
+    //     .add(Job::new_async("0 0 0 * * *", move |_uuid, mut _l| {
+    //         let pool = pool2.clone();
+    //         Box::pin(async move {
+    //             info!(
+    //                 "Start schedule !!! Current time: {:?}",
+    //                 std::time::SystemTime::now()
+    //             );
+    //             gold::obtain(&pool).await.expect("obtain gold info failed!");
+    //             stock::obtain(&pool)
+    //                 .await
+    //                 .expect("obtain stock info failed!");
+    //             send_email(&pool).await.expect("send email failed!");
+    //         })
+    //     })?)
+    //     .await?;
+    // sched.start().await?;
 
     info!("Main thread start !!!");
 

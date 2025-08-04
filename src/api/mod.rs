@@ -19,6 +19,8 @@ pub fn app(pool: MySqlPool) -> Router {
         .route("/pixiu/init", post(pixiu_init))
         .route("/pixiu/fund", post(pixiu_insert_fund_info))
         .route("/pixiu/fund", get(pixiu_get_fund_info))
+        .route("/pixiu/fund/sources", get(pixiu_get_fund_sources))
+        .route("/pixiu/fund/types", get(pixiu_get_fund_types))
         .route("/pixiu/debt", get(pixiu_get_debt_info))
         .route("/pixiu/property", get(pixiu_get_property_info))
         .with_state(pool.clone())
@@ -53,12 +55,48 @@ async fn pixiu_get_fund_info(
     State(pool): State<MySqlPool>,
     Query(params): Query<PageRequest>,
 ) -> Result<Json<PageResponse<pixiu::FundInfo>>, AppError> {
-    let total = pixiu::count(&pool, params.from, params.to).await?;
-    let funds =
-        pixiu::get_fund_info(&pool, params.from, params.to, params.page, params.size).await?;
-    let sums = pixiu::get_sum_info(&pool, params.from, params.to).await?;
-    let income = pixiu::get_income_info(&pool, params.from, params.to).await?;
-    let expenses = pixiu::get_expense_info(&pool, params.from, params.to).await?;
+    let total = pixiu::count(
+        &pool,
+        params.from,
+        params.to,
+        params.source.clone(),
+        params.fund_type.clone(),
+    )
+    .await?;
+    let funds = pixiu::get_fund_info(
+        &pool,
+        params.from,
+        params.to,
+        params.page,
+        params.size,
+        params.source.clone(),
+        params.fund_type.clone(),
+    )
+    .await?;
+    let sums = pixiu::get_sum_info(
+        &pool,
+        params.from,
+        params.to,
+        params.source.clone(),
+        params.fund_type.clone(),
+    )
+    .await?;
+    let income = pixiu::get_income_info(
+        &pool,
+        params.from,
+        params.to,
+        params.source.clone(),
+        params.fund_type.clone(),
+    )
+    .await?;
+    let expenses = pixiu::get_expense_info(
+        &pool,
+        params.from,
+        params.to,
+        params.source.clone(),
+        params.fund_type.clone(),
+    )
+    .await?;
     let response = PageResponse {
         total,
         data: funds,
@@ -83,12 +121,29 @@ async fn pixiu_get_property_info(
     Ok(Json(properties))
 }
 
+async fn pixiu_get_fund_sources(
+    State(pool): State<MySqlPool>,
+) -> Result<Json<Vec<String>>, AppError> {
+    let sources = pixiu::get_fund_sources(&pool).await?;
+    Ok(Json(sources))
+}
+
+async fn pixiu_get_fund_types(
+    State(pool): State<MySqlPool>,
+) -> Result<Json<Vec<String>>, AppError> {
+    let types = pixiu::get_fund_types(&pool).await?;
+    Ok(Json(types))
+}
+
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct PageRequest {
     from: i64,
     to: i64,
     page: u32,
     size: u32,
+    source: Option<String>,
+    #[serde(rename = "type")]
+    fund_type: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]

@@ -79,58 +79,115 @@ pub async fn get_fund_info(
     to: i64,
     page: u32,
     size: u32,
+    source: Option<String>,
+    fund_type: Option<String>,
 ) -> anyhow::Result<Vec<FundInfo>> {
     let offset = (page - 1) * size;
-    let sql = format!(
-        "SELECT * FROM pixiu_fund_info WHERE timestamp BETWEEN {} AND {} order by timestamp desc, id limit {} offset {}",
-        from, to, size, offset
-    );
-    let rows = sqlx::query_as(&sql).fetch_all(pool).await?;
-    Ok(rows)
-}
-
-pub async fn get_sum_info(pool: &MySqlPool, from: i64, to: i64) -> anyhow::Result<Vec<SumInfo>> {
-    let sql = format!(
-        "select class as name, sum(ceil(-amount)) as value
-        from pixiu_fund_info
-        where timestamp BETWEEN {} AND {}
-        group by class
-        having value > 0",
+    let mut sql = format!(
+        "SELECT * FROM pixiu_fund_info WHERE timestamp BETWEEN {} AND {}",
         from, to
     );
+    if let Some(source) = source {
+        sql.push_str(&format!(" AND source = '{}'", source));
+    }
+    if let Some(fund_type) = fund_type {
+        sql.push_str(&format!(" AND class = '{}'", fund_type));
+    }
+    sql.push_str(&format!(" order by timestamp desc, id limit {} offset {}", size, offset));
+
     let rows = sqlx::query_as(&sql).fetch_all(pool).await?;
     Ok(rows)
 }
 
-pub async fn get_income_info(pool: &MySqlPool, from: i64, to: i64) -> anyhow::Result<f32> {
-    let sql = format!(
+pub async fn get_sum_info(
+    pool: &MySqlPool,
+    from: i64,
+    to: i64,
+    source: Option<String>,
+    fund_type: Option<String>,
+) -> anyhow::Result<Vec<SumInfo>> {
+    let mut sql = format!(
+        "select class as name, sum(ceil(-amount)) as value
+        from pixiu_fund_info
+        where timestamp BETWEEN {} AND {}",
+        from, to
+    );
+    if let Some(source) = source {
+        sql.push_str(&format!(" AND source = '{}'", source));
+    }
+    if let Some(fund_type) = fund_type {
+        sql.push_str(&format!(" AND class = '{}'", fund_type));
+    }
+    sql.push_str(" group by class having value > 0");
+    let rows = sqlx::query_as(&sql).fetch_all(pool).await?;
+    Ok(rows)
+}
+
+pub async fn get_income_info(
+    pool: &MySqlPool,
+    from: i64,
+    to: i64,
+    source: Option<String>,
+    fund_type: Option<String>,
+) -> anyhow::Result<f32> {
+    let mut sql = format!(
         "SELECT IFNULL(SUM(CEIL(amount)), 0)
         FROM pixiu_fund_info
         WHERE timestamp BETWEEN {} AND {}
         AND amount > 0",
         from, to
     );
+    if let Some(source) = source {
+        sql.push_str(&format!(" AND source = '{}'", source));
+    }
+    if let Some(fund_type) = fund_type {
+        sql.push_str(&format!(" AND class = '{}'", fund_type));
+    }
     let result: Option<f32> = sqlx::query_scalar(&sql).fetch_optional(pool).await?;
     Ok(result.unwrap_or(0.0))
 }
 
-pub async fn get_expense_info(pool: &MySqlPool, from: i64, to: i64) -> anyhow::Result<f32> {
-    let sql = format!(
+pub async fn get_expense_info(
+    pool: &MySqlPool,
+    from: i64,
+    to: i64,
+    source: Option<String>,
+    fund_type: Option<String>,
+) -> anyhow::Result<f32> {
+    let mut sql = format!(
         "SELECT IFNULL(SUM(CEIL(amount)), 0)
         FROM pixiu_fund_info
         WHERE timestamp BETWEEN {} AND {}
         AND amount < 0",
         from, to
     );
+    if let Some(source) = source {
+        sql.push_str(&format!(" AND source = '{}'", source));
+    }
+    if let Some(fund_type) = fund_type {
+        sql.push_str(&format!(" AND class = '{}'", fund_type));
+    }
     let result: Option<f32> = sqlx::query_scalar(&sql).fetch_optional(pool).await?;
     Ok(result.unwrap_or(0.0))
 }
 
-pub async fn count(pool: &MySqlPool, from: i64, to: i64) -> anyhow::Result<i32> {
-    let sql = format!(
+pub async fn count(
+    pool: &MySqlPool,
+    from: i64,
+    to: i64,
+    source: Option<String>,
+    fund_type: Option<String>,
+) -> anyhow::Result<i32> {
+    let mut sql = format!(
         "SELECT COUNT(*) FROM pixiu_fund_info WHERE timestamp BETWEEN {} AND {}",
         from, to
     );
+    if let Some(source) = source {
+        sql.push_str(&format!(" AND source = '{}'", source));
+    }
+    if let Some(fund_type) = fund_type {
+        sql.push_str(&format!(" AND class = '{}'", fund_type));
+    }
     let count: i32 = sqlx::query_scalar(&sql).fetch_one(pool).await?;
     Ok(count)
 }
@@ -154,5 +211,17 @@ pub async fn get_property_info(pool: &MySqlPool) -> anyhow::Result<Vec<PropertyI
     GROUP BY
         ppi.id, ppi.name, ppi.amount";
     let rows = sqlx::query_as(sql).fetch_all(pool).await?;
+    Ok(rows)
+}
+
+pub async fn get_fund_sources(pool: &MySqlPool) -> anyhow::Result<Vec<String>> {
+    let sql = "SELECT DISTINCT source FROM pixiu_fund_info";
+    let rows = sqlx::query_scalar(sql).fetch_all(pool).await?;
+    Ok(rows)
+}
+
+pub async fn get_fund_types(pool: &MySqlPool) -> anyhow::Result<Vec<String>> {
+    let sql = "SELECT DISTINCT class FROM pixiu_fund_info";
+    let rows = sqlx::query_scalar(sql).fetch_all(pool).await?;
     Ok(rows)
 }

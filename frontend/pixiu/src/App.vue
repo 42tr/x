@@ -3,20 +3,36 @@ import { onMounted, ref } from 'vue'
 import Property from './components/Property.vue'
 import Table from './components/Table.vue'
 import EchartPie from './components/EchartPie.vue'
-import { NSpace, NLayout, NLayoutContent, NLayoutFooter, NDatePicker, NGradientText, NNumberAnimation } from 'naive-ui'
-import { getFundList, getDebtList, getPropertyList } from './api/api'
+import {
+  NSpace,
+  NLayout,
+  NLayoutContent,
+  NLayoutFooter,
+  NDatePicker,
+  NGradientText,
+  NNumberAnimation,
+  NSelect
+} from 'naive-ui'
+import { getFundList, getDebtList, getPropertyList, getFundSources, getFundTypes } from './api/api'
 import type { Fund } from './types/fund'
 import type { Debt } from './types/debt'
 import type { Property as PropertyInfo } from './types/property'
 
 const page_count = ref<number>(10)
 const page = ref<number>(1)
-const range = ref<[number, number]>([new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).getTime(), Date.now()])
+const range = ref<[number, number]>([
+  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).getTime(),
+  Date.now()
+])
 const data = ref<Fund[]>([])
 const debtData = ref<Debt[]>([])
 const propertyData = ref<PropertyInfo[]>([])
 const totalIncome = ref<number>(0)
 const totalExpense = ref<number>(0)
+const source = ref<string>('')
+const type = ref<string>('')
+const sources = ref<string[]>([])
+const types = ref<string[]>([])
 const spendPieData = ref<
   {
     name: string
@@ -26,6 +42,8 @@ const spendPieData = ref<
 
 onMounted(async () => {
   await refresh()
+  sources.value = await getFundSources()
+  types.value = await getFundTypes()
 })
 
 async function changeDate() {
@@ -57,7 +75,14 @@ async function getDebtInfo() {
 }
 
 async function getFundInfo() {
-  let resp = await getFundList(range.value[0], range.value[1], page.value, 10)
+  let resp = await getFundList(
+    range.value[0],
+    range.value[1],
+    page.value,
+    10,
+    source.value,
+    type.value
+  )
   page_count.value = Math.ceil(resp.total / 10)
   let fundList = resp.data.map((item) => {
     if (item.timestamp) {
@@ -85,7 +110,26 @@ async function getFundInfo() {
                 type="daterange"
                 size="small"
                 style="width: 300px"
-                :on-change="changeDate" />
+                :on-change="changeDate"
+              />
+              <n-select
+                v-model:value="source"
+                :options="sources.map((item) => ({ label: item, value: item }))"
+                placeholder="选择来源"
+                clearable
+                size="small"
+                style="width: 200px"
+                :on-change="changeDate"
+              />
+              <n-select
+                v-model:value="type"
+                :options="types.map((item) => ({ label: item, value: item }))"
+                placeholder="选择类型"
+                clearable
+                size="small"
+                style="width: 200px"
+                :on-change="changeDate"
+              />
               <n-gradient-text type="error" style="margin-left: 20px; width: 100px">
                 收入：
                 <n-number-animation
@@ -93,7 +137,8 @@ async function getFundInfo() {
                   ref="numberAnimationInstRef"
                   :from="0.0"
                   :to="totalIncome"
-                  :precision="2" />
+                  :precision="2"
+                />
               </n-gradient-text>
               <n-gradient-text type="success">
                 支出：
@@ -102,7 +147,8 @@ async function getFundInfo() {
                   ref="numberAnimationInstRef"
                   :from="0.0"
                   :to="totalExpense"
-                  :precision="2" />
+                  :precision="2"
+                />
               </n-gradient-text>
             </div>
             <br />
@@ -112,11 +158,13 @@ async function getFundInfo() {
               v-model:page-count="page_count"
               size="small"
               :on-change="refresh"
-              v-if="page_count > 1" />
+              v-if="page_count > 1"
+            />
           </n-layout-content>
           <n-layout-sider
             content-style="padding: 24px; display: flex; justify-content: center; align-items: center"
-            width="28.2%">
+            width="28.2%"
+          >
             <EchartPie :data="spendPieData" height="300px" width="300px" />
           </n-layout-sider>
         </n-layout>

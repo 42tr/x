@@ -250,3 +250,9 @@ pub async fn get_fund_types(pool: &MySqlPool) -> anyhow::Result<Vec<String>> {
     let rows = sqlx::query_scalar(sql).fetch_all(pool).await?;
     Ok(rows)
 }
+
+pub async fn delete_fund_info(pool: &MySqlPool, id: u32) -> anyhow::Result<()> {
+    let sql = "DELETE FROM pixiu_fund_info WHERE id = ?";
+    sqlx::query(sql).bind(id).execute(pool).await?;
+    Ok(())
+}

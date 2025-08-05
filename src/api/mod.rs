@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Json, Query, State},
+    extract::{Json, Query, State, Path},
     http::{HeaderValue, Method, StatusCode, Uri},
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{get, post, delete},
     Router,
 };
 use mime_guess::from_path;
@@ -19,6 +19,7 @@ pub fn app(pool: MySqlPool) -> Router {
         .route("/pixiu/init", post(pixiu_init))
         .route("/pixiu/fund", post(pixiu_insert_fund_info))
         .route("/pixiu/fund", get(pixiu_get_fund_info))
+        .route("/pixiu/fund/{id}", delete(pixiu_delete_fund_info))
         .route("/pixiu/fund/sources", get(pixiu_get_fund_sources))
         .route("/pixiu/fund/types", get(pixiu_get_fund_types))
         .route("/pixiu/debt", get(pixiu_get_debt_info))
@@ -33,6 +34,7 @@ pub fn app(pool: MySqlPool) -> Router {
                     Method::OPTIONS,
                     Method::HEAD,
                     Method::PUT,
+                    Method::DELETE,
                 ]),
         )
         .fallback(get(frontend_router))
@@ -133,6 +135,14 @@ async fn pixiu_get_fund_types(
 ) -> Result<Json<Vec<String>>, AppError> {
     let types = pixiu::get_fund_types(&pool).await?;
     Ok(Json(types))
+}
+
+async fn pixiu_delete_fund_info(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<u32>,
+) -> Result<(), AppError> {
+    pixiu::delete_fund_info(&pool, id).await?;
+    Ok(())
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]

@@ -17,7 +17,8 @@ import {
   NCard,
   NInput,
   NSelect,
-  NInputNumber
+  NInputNumber,
+  NDialogProvider
 } from 'naive-ui'
 import {
   getFundList,
@@ -150,7 +151,8 @@ async function handleSave() {
 </script>
 
 <template>
-  <n-space vertical size="large" style="height: 100vh">
+  <n-dialog-provider>
+    <n-space vertical size="large" style="height: 100vh">
     <n-layout style="height: 100vh">
       <n-layout-content bordered content-style="padding: 24px;" style="height: 74.8%">
         <n-layout has-sider>
@@ -242,6 +244,7 @@ async function handleSave() {
       </template>
     </n-card>
   </n-modal>
+</n-dialog-provider>
 </template>
 
 <style scoped></style>

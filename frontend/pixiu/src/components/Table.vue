@@ -4,7 +4,7 @@
 
 <script lang="ts" setup>
 import type { DataTableColumns } from 'naive-ui'
-import { NGradientText, NSelect, NButton, NSpace } from 'naive-ui'
+import { NGradientText, NSelect, NButton, NSpace, useDialog } from 'naive-ui'
 import { h } from 'vue'
 import type { PropType } from 'vue'
 
@@ -23,6 +23,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'delete'])
+const dialog = useDialog()
 
 const source = defineModel('source')
 const type = defineModel('type')
@@ -112,7 +113,17 @@ const tableColumns: DataTableColumns<Song> = [
             strong: true,
             tertiary: true,
             size: 'small',
-            onClick: () => emit('delete', row)
+            onClick: () => {
+              dialog.warning({
+                title: '删除',
+                content: '确认删除？',
+                positiveText: '确认',
+                negativeText: '取消',
+                onPositiveClick: () => {
+                  emit('delete', row)
+                }
+              })
+            }
           },
           { default: () => 'Delete' }
         )

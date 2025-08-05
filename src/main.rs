@@ -4,7 +4,6 @@ use tokio::net::TcpListener;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod api;
-mod comic;
 mod email;
 mod gold;
 mod leetcode;
@@ -95,9 +94,6 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
     utils::create_line_img("Gold Info", "RMB", GOLD_INFO_IMG_NAME, gold.0, gold.1)?;
     let stock = stock::get_info(pool).await?;
     utils::create_line_img("SSE Index", "Point", STOCK_INFO_IMG_NAME, stock.0, stock.1)?;
-    let comics = comic::get_latest_chapters()
-        .await
-        .expect("get comics failed");
     let weathers = weather::get().await.expect("get weather failed");
 
     let content = format!(
@@ -115,13 +111,11 @@ async fn send_email(pool: &MySqlPool) -> anyhow::Result<()> {
                 <img src="cid:{GOLD_INFO_IMG_NAME}" />
                 <h2>上证指数</h2>
                 <img src="cid:{STOCK_INFO_IMG_NAME}" />
-                {}
             </body>
         </html>
     "#,
         saying::get().await.expect("get saying error"),
-        concat_weather(weathers),
-        concat_comic(comics)
+        concat_weather(weathers)
     );
 
     email::send_with_file(

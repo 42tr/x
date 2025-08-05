@@ -120,7 +120,7 @@ async function getFundInfo() {
 }
 
 function handleAdd() {
-  currentFund.value = {} as Fund
+  currentFund.value = { timestamp: Date.now() } as Fund
   isEdit.value = false
   showModal.value = true
 }
@@ -144,6 +144,8 @@ async function handleSave() {
   }
   showModal.value = false
   await refresh()
+  sources.value = await getFundSources()
+  types.value = await getFundTypes()
 }
 </script>
 
@@ -219,15 +221,20 @@ async function handleSave() {
       <n-space vertical>
         <n-input v-model:value="currentFund.name" placeholder="Name" />
         <n-input-number v-model:value="currentFund.amount" placeholder="Amount" />
+        <n-date-picker v-model:value="currentFund.timestamp" type="date" />
         <n-select
           v-model:value="currentFund.class"
           :options="types.map((item) => ({ label: item, value: item }))"
           placeholder="Type"
+          tag
+          filterable
         />
         <n-select
           v-model:value="currentFund.source"
           :options="sources.map((item) => ({ label: item, value: item }))"
           placeholder="Source"
+          tag
+          filterable
         />
       </n-space>
       <template #footer>

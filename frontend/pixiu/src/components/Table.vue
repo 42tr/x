@@ -4,11 +4,12 @@
 
 <script lang="ts" setup>
 import type { DataTableColumns } from 'naive-ui'
-import { NGradientText, NSelect } from 'naive-ui'
+import { NGradientText, NSelect, NButton, NSpace } from 'naive-ui'
 import { h } from 'vue'
 import type { PropType } from 'vue'
 
 interface Song {
+  id: number
   amount: number
   name: string
   class: string
@@ -20,6 +21,8 @@ const props = defineProps({
   sources: { type: Array as PropType<string[]>, required: true },
   types: { type: Array as PropType<string[]>, required: true }
 })
+
+const emit = defineEmits(['edit', 'delete'])
 
 const source = defineModel('source')
 const type = defineModel('type')
@@ -86,6 +89,34 @@ const tableColumns: DataTableColumns<Song> = [
         },
         { default: () => colorTitle('来源', 'error') }
       )
+    }
+  },
+  {
+    key: 'actions',
+    title: 'Actions',
+    render(row) {
+      return h(NSpace, {}, () => [
+        h(
+          NButton,
+          {
+            strong: true,
+            tertiary: true,
+            size: 'small',
+            onClick: () => emit('edit', row)
+          },
+          { default: () => 'Edit' }
+        ),
+        h(
+          NButton,
+          {
+            strong: true,
+            tertiary: true,
+            size: 'small',
+            onClick: () => emit('delete', row)
+          },
+          { default: () => 'Delete' }
+        )
+      ])
     }
   }
 ]

@@ -37,3 +37,15 @@ export function getDebtList(): Promise<Debt[]> {
 export function getPropertyList(): Promise<Property[]> {
   return http.get('/pixiu/property')
 }
+
+export function addFund(fund: Fund): Promise<Fund> {
+  return http.post('/pixiu/fund', fund)
+}
+
+export function updateFund(fund: Fund): Promise<Fund> {
+  return http.put(`/pixiu/fund/${fund.id}`, fund)
+}
+
+export function deleteFund(id: number): Promise<void> {
+  return http.delete(`/pixiu/fund/${id}`)
+}

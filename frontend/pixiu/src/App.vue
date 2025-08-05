@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import Property from './components/Property.vue'
@@ -10,9 +11,24 @@ import {
   NLayoutFooter,
   NDatePicker,
   NGradientText,
-  NNumberAnimation
+  NNumberAnimation,
+  NButton,
+  NModal,
+  NCard,
+  NInput,
+  NSelect,
+  NInputNumber
 } from 'naive-ui'
-import { getFundList, getDebtList, getPropertyList, getFundSources, getFundTypes } from './api/api'
+import {
+  getFundList,
+  getDebtList,
+  getPropertyList,
+  getFundSources,
+  getFundTypes,
+  addFund,
+  updateFund,
+  deleteFund
+} from './api/api'
 import type { Fund } from './types/fund'
 import type { Debt } from './types/debt'
 import type { Property as PropertyInfo } from './types/property'
@@ -38,6 +54,9 @@ const spendPieData = ref<
     value: number
   }[]
 >([])
+const showModal = ref(false)
+const currentFund = ref<Fund>({} as Fund)
+const isEdit = ref(false)
 
 watch([source, type], () => {
   changeDate()
@@ -99,6 +118,33 @@ async function getFundInfo() {
   totalExpense.value = resp.expenses
   spendPieData.value = resp.sum
 }
+
+function handleAdd() {
+  currentFund.value = {} as Fund
+  isEdit.value = false
+  showModal.value = true
+}
+
+function handleEdit(row: Fund) {
+  currentFund.value = { ...row }
+  isEdit.value = true
+  showModal.value = true
+}
+
+async function handleDelete(row: Fund) {
+  await deleteFund(row.id)
+  await refresh()
+}
+
+async function handleSave() {
+  if (isEdit.value) {
+    await updateFund(currentFund.value)
+  } else {
+    await addFund(currentFund.value)
+  }
+  showModal.value = false
+  await refresh()
+}
 </script>
 
 <template>
@@ -108,6 +154,7 @@ async function getFundInfo() {
         <n-layout has-sider>
           <n-layout-content content-style="padding: 24px;">
             <div style="display: flex; align-items: center; gap: 8px">
+              <n-button @click="handleAdd">Add</n-button>
               <n-date-picker
                 v-model:value="range"
                 type="daterange"
@@ -137,7 +184,15 @@ async function getFundInfo() {
               </n-gradient-text>
             </div>
             <br />
-            <Table :data="data" v-model:source="source" v-model:type="type" :sources="sources" :types="types" />
+            <Table
+              :data="data"
+              v-model:source="source"
+              v-model:type="type"
+              :sources="sources"
+              :types="types"
+              @edit="handleEdit"
+              @delete="handleDelete"
+            />
             <n-pagination
               v-model:page="page"
               v-model:page-count="page_count"
@@ -159,6 +214,27 @@ async function getFundInfo() {
       </n-layout-footer>
     </n-layout>
   </n-space>
+  <n-modal v-model:show="showModal">
+    <n-card style="width: 600px" :title="isEdit ? 'Edit Fund' : 'Add Fund'" :bordered="false" size="huge">
+      <n-space vertical>
+        <n-input v-model:value="currentFund.name" placeholder="Name" />
+        <n-input-number v-model:value="currentFund.amount" placeholder="Amount" />
+        <n-select
+          v-model:value="currentFund.class"
+          :options="types.map((item) => ({ label: item, value: item }))"
+          placeholder="Type"
+        />
+        <n-select
+          v-model:value="currentFund.source"
+          :options="sources.map((item) => ({ label: item, value: item }))"
+          placeholder="Source"
+        />
+      </n-space>
+      <template #footer>
+        <n-button @click="handleSave">Save</n-button>
+      </template>
+    </n-card>
+  </n-modal>
 </template>
 
 <style scoped></style>

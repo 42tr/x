@@ -98,7 +98,10 @@ pub async fn get_fund_info(
             sql.push_str(&format!(" AND class IN ({})", types.join(",")));
         }
     }
-    sql.push_str(&format!(" order by timestamp desc, id limit {} offset {}", size, offset));
+    sql.push_str(&format!(
+        " order by timestamp desc, id limit {} offset {}",
+        size, offset
+    ));
 
     let rows = sqlx::query_as(&sql).fetch_all(pool).await?;
     Ok(rows)
@@ -141,7 +144,7 @@ pub async fn get_income_info(
     fund_type: Option<String>,
 ) -> anyhow::Result<f32> {
     let mut sql = format!(
-        "SELECT IFNULL(SUM(CEIL(amount)), 0)
+        "SELECT ROUND(IFNULL(SUM(amount), 0), 2)
         FROM pixiu_fund_info
         WHERE timestamp BETWEEN {} AND {}
         AND amount > 0",
@@ -170,7 +173,7 @@ pub async fn get_expense_info(
     fund_type: Option<String>,
 ) -> anyhow::Result<f32> {
     let mut sql = format!(
-        "SELECT IFNULL(SUM(CEIL(amount)), 0)
+        "SELECT ROUND(IFNULL(SUM(amount), 0), 2)
         FROM pixiu_fund_info
         WHERE timestamp BETWEEN {} AND {}
         AND amount < 0",

@@ -4,7 +4,7 @@
 
 <script lang="ts" setup>
 import type { DataTableColumns } from 'naive-ui'
-import { NGradientText, NSelect, NButton, NSpace, useDialog } from 'naive-ui'
+import { NGradientText, NSelect, NButton, NSpace, useDialog, NInput, NTooltip } from 'naive-ui'
 import { h } from 'vue'
 import type { PropType } from 'vue'
 
@@ -25,8 +25,9 @@ const props = defineProps({
 const emit = defineEmits(['edit', 'delete'])
 const dialog = useDialog()
 
-const source = defineModel('source')
-const type = defineModel('type')
+const source = defineModel<string[]>('source')
+const type = defineModel<string[]>('type')
+const name = defineModel<string>('name')
 
 type GradientType = 'info' | 'success' | 'warning' | 'error' | 'primary' | 'danger'
 function colorTitle(title: string, type: GradientType = 'info') {
@@ -47,26 +48,47 @@ const tableColumns: DataTableColumns<Song> = [
       return colorTitle('金额', 'danger')
     }
   },
-  {
-    key: 'name',
-    title() {
-      return colorTitle('名称', 'success')
-    }
-  },
+  
   {
     key: 'class',
+    width: 150,
     title() {
       return h(
         NSelect,
         {
           options: props.types.map((item) => ({ label: item, value: item })),
-          value: type.value as string,
-          'onUpdate:value': (v) => (type.value = v),
+          value: type.value as string[],
+          'onUpdate:value': (v: string[]) => (type.value = v),
           placeholder: '选择类型',
           clearable: true,
           multiple: true
         },
         { default: () => colorTitle('类型', 'info') }
+      )
+    },
+    render(row) {
+      return h(
+        NTooltip,
+        {},
+        {
+          trigger: () => h('span', {}, row.class),
+          default: () => row.class
+        }
+      )
+    }
+  },
+  {
+    key: 'name',
+    title() {
+      return h(
+        NInput,
+        {
+          value: name.value,
+          'onUpdate:value': (v: string) => (name.value = v),
+          placeholder: '输入名称',
+          clearable: true
+        },
+        { default: () => colorTitle('名称', 'success') }
       )
     }
   },
@@ -78,17 +100,29 @@ const tableColumns: DataTableColumns<Song> = [
   },
   {
     key: 'source',
+    width: 150,
     title() {
       return h(
         NSelect,
         {
           options: props.sources.map((item) => ({ label: item, value: item })),
-          value: source.value as string,
-          'onUpdate:value': (v) => (source.value = v),
+          value: source.value as string[],
+          'onUpdate:value': (v: string[]) => (source.value = v),
           placeholder: '选择来源',
-          clearable: true
+          clearable: true,
+          multiple: true
         },
         { default: () => colorTitle('来源', 'error') }
+      )
+    },
+    render(row) {
+      return h(
+        NTooltip,
+        {},
+        {
+          trigger: () => h('span', {}, row.source),
+          default: () => row.source
+        }
       )
     }
   },

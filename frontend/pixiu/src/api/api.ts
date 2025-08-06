@@ -9,15 +9,19 @@ export function getFundList(
   to: number,
   page: number,
   size: number,
-  source?: string,
-  type?: string
+  source?: string[],
+  type?: string[],
+  name?: string
 ): Promise<Page<Fund>> {
   let url = `/pixiu/fund?from=${from}&to=${to}&page=${page}&size=${size}`
-  if (source) {
-    url += `&source=${source}`
+  if (source && source.length > 0) {
+    url += `&source=${source.join(',')}`
   }
-  if (type) {
-    url += `&type=${type}`
+  if (type && type.length > 0) {
+    url += `&type=${type.join(',')}`
+  }
+  if (name) {
+    url += `&name=${name}`
   }
   return http.get(url)
 }

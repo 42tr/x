@@ -45,8 +45,9 @@ const debtData = ref<Debt[]>([])
 const propertyData = ref<PropertyInfo[]>([])
 const totalIncome = ref<number>(0)
 const totalExpense = ref<number>(0)
-const source = ref<string>('')
+const source = ref<string[]>([])
 const type = ref<string[]>([])
+const name = ref<string>('')
 const sources = ref<string[]>([])
 const types = ref<string[]>([])
 const spendPieData = ref<
@@ -59,7 +60,7 @@ const showModal = ref(false)
 const currentFund = ref<Fund>({} as Fund)
 const isEdit = ref(false)
 
-watch([source, type], () => {
+watch([source, type, name], () => {
   changeDate()
 })
 
@@ -104,7 +105,8 @@ async function getFundInfo() {
     page.value,
     10,
     source.value,
-    type.value.join(',')
+    type.value,
+    name.value
   )
   page_count.value = Math.ceil(resp.total / 10)
   let fundList = resp.data.map((item) => {
@@ -192,6 +194,7 @@ async function handleSave() {
               :data="data"
               v-model:source="source"
               v-model:type="type"
+              v-model:name="name"
               :sources="sources"
               :types="types"
               @edit="handleEdit"

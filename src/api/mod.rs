@@ -64,6 +64,7 @@ async fn pixiu_get_fund_info(
         params.to,
         params.source.clone(),
         params.fund_type.clone(),
+        params.name.clone(),
     )
     .await?;
     let funds = pixiu::get_fund_info(
@@ -74,6 +75,7 @@ async fn pixiu_get_fund_info(
         params.size,
         params.source.clone(),
         params.fund_type.clone(),
+        params.name.clone(),
     )
     .await?;
     let sums = pixiu::get_sum_info(
@@ -82,6 +84,7 @@ async fn pixiu_get_fund_info(
         params.to,
         params.source.clone(),
         params.fund_type.clone(),
+        params.name.clone(),
     )
     .await?;
     let income = pixiu::get_income_info(
@@ -90,6 +93,7 @@ async fn pixiu_get_fund_info(
         params.to,
         params.source.clone(),
         params.fund_type.clone(),
+        params.name.clone(),
     )
     .await?;
     let expenses = pixiu::get_expense_info(
@@ -98,6 +102,7 @@ async fn pixiu_get_fund_info(
         params.to,
         params.source.clone(),
         params.fund_type.clone(),
+        params.name.clone(),
     )
     .await?;
     let response = PageResponse {
@@ -164,6 +169,7 @@ pub struct PageRequest {
     source: Option<String>,
     #[serde(rename = "type")]
     fund_type: Option<String>,
+    name: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]

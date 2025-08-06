@@ -81,6 +81,7 @@ pub async fn get_fund_info(
     size: u32,
     source: Option<String>,
     fund_type: Option<String>,
+    name: Option<String>,
 ) -> anyhow::Result<Vec<FundInfo>> {
     let offset = (page - 1) * size;
     let mut sql = format!(
@@ -98,6 +99,11 @@ pub async fn get_fund_info(
             sql.push_str(&format!(" AND class IN ({})", types.join(",")));
         }
     }
+    if let Some(name) = name {
+        if !name.is_empty() {
+            sql.push_str(&format!(" AND name LIKE '%{}%'", name));
+        }
+    }
     sql.push_str(&format!(
         " order by timestamp desc, id limit {} offset {}",
         size, offset
@@ -113,6 +119,7 @@ pub async fn get_sum_info(
     to: i64,
     source: Option<String>,
     fund_type: Option<String>,
+    name: Option<String>,
 ) -> anyhow::Result<Vec<SumInfo>> {
     let mut sql = format!(
         "select class as name, sum(ceil(-amount)) as value
@@ -131,6 +138,11 @@ pub async fn get_sum_info(
             sql.push_str(&format!(" AND class IN ({})", types.join(",")));
         }
     }
+    if let Some(name) = name {
+        if !name.is_empty() {
+            sql.push_str(&format!(" AND name LIKE '%{}%'", name));
+        }
+    }
     sql.push_str(" group by class having value > 0");
     let rows = sqlx::query_as(&sql).fetch_all(pool).await?;
     Ok(rows)
@@ -142,6 +154,7 @@ pub async fn get_income_info(
     to: i64,
     source: Option<String>,
     fund_type: Option<String>,
+    name: Option<String>,
 ) -> anyhow::Result<f32> {
     let mut sql = format!(
         "SELECT ROUND(IFNULL(SUM(amount), 0), 2)
@@ -161,6 +174,11 @@ pub async fn get_income_info(
             sql.push_str(&format!(" AND class IN ({})", types.join(",")));
         }
     }
+    if let Some(name) = name {
+        if !name.is_empty() {
+            sql.push_str(&format!(" AND name LIKE '%{}%'", name));
+        }
+    }
     let result: Option<f32> = sqlx::query_scalar(&sql).fetch_optional(pool).await?;
     Ok(result.unwrap_or(0.0))
 }
@@ -171,6 +189,7 @@ pub async fn get_expense_info(
     to: i64,
     source: Option<String>,
     fund_type: Option<String>,
+    name: Option<String>,
 ) -> anyhow::Result<f32> {
     let mut sql = format!(
         "SELECT ROUND(IFNULL(SUM(amount), 0), 2)
@@ -190,6 +209,11 @@ pub async fn get_expense_info(
             sql.push_str(&format!(" AND class IN ({})", types.join(",")));
         }
     }
+    if let Some(name) = name {
+        if !name.is_empty() {
+            sql.push_str(&format!(" AND name LIKE '%{}%'", name));
+        }
+    }
     let result: Option<f32> = sqlx::query_scalar(&sql).fetch_optional(pool).await?;
     Ok(result.unwrap_or(0.0))
 }
@@ -200,6 +224,7 @@ pub async fn count(
     to: i64,
     source: Option<String>,
     fund_type: Option<String>,
+    name: Option<String>,
 ) -> anyhow::Result<i32> {
     let mut sql = format!(
         "SELECT COUNT(*) FROM pixiu_fund_info WHERE timestamp BETWEEN {} AND {}",
@@ -214,6 +239,11 @@ pub async fn count(
         if !fund_type.is_empty() {
             let types: Vec<String> = fund_type.split(',').map(|s| format!("'{}'", s)).collect();
             sql.push_str(&format!(" AND class IN ({})", types.join(",")));
+        }
+    }
+    if let Some(name) = name {
+        if !name.is_empty() {
+            sql.push_str(&format!(" AND name LIKE '%{}%'", name));
         }
     }
     let count: i32 = sqlx::query_scalar(&sql).fetch_one(pool).await?;

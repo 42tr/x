@@ -256,3 +256,17 @@ pub async fn delete_fund_info(pool: &MySqlPool, id: u32) -> anyhow::Result<()> {
     sqlx::query(sql).bind(id).execute(pool).await?;
     Ok(())
 }
+
+pub async fn update_fund_info(pool: &MySqlPool, id: u32, info: FundInfo) -> anyhow::Result<()> {
+    let sql = "UPDATE pixiu_fund_info SET amount = ?, name = ?, class = ?, timestamp = ?, source = ? WHERE id = ?";
+    sqlx::query(sql)
+        .bind(info.amount)
+        .bind(info.name)
+        .bind(info.class)
+        .bind(info.timestamp)
+        .bind(info.source)
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}

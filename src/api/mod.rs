@@ -2,7 +2,7 @@ use axum::{
     extract::{Json, Query, State, Path},
     http::{HeaderValue, Method, StatusCode, Uri},
     response::{IntoResponse, Response},
-    routing::{get, post, delete},
+    routing::{get, post, delete, put},
     Router,
 };
 use mime_guess::from_path;
@@ -20,6 +20,7 @@ pub fn app(pool: MySqlPool) -> Router {
         .route("/pixiu/fund", post(pixiu_insert_fund_info))
         .route("/pixiu/fund", get(pixiu_get_fund_info))
         .route("/pixiu/fund/{id}", delete(pixiu_delete_fund_info))
+        .route("/pixiu/fund/{id}", put(pixiu_update_fund_info))
         .route("/pixiu/fund/sources", get(pixiu_get_fund_sources))
         .route("/pixiu/fund/types", get(pixiu_get_fund_types))
         .route("/pixiu/debt", get(pixiu_get_debt_info))
@@ -142,6 +143,15 @@ async fn pixiu_delete_fund_info(
     Path(id): Path<u32>,
 ) -> Result<(), AppError> {
     pixiu::delete_fund_info(&pool, id).await?;
+    Ok(())
+}
+
+async fn pixiu_update_fund_info(
+    State(pool): State<MySqlPool>,
+    Path(id): Path<u32>,
+    Json(payload): Json<pixiu::FundInfo>,
+) -> Result<(), AppError> {
+    pixiu::update_fund_info(&pool, id, payload).await?;
     Ok(())
 }
 
